@@ -1,0 +1,70 @@
+# GTECH Template. Visit go/calvin-file for more information and options.
+# Unique identifier for this solution.
+id: 39363419903
+
+# User friendly name for your project.
+project: floodlight_audit
+
+# A yaml List of ldaps of users involved in developing the solution.
+authors:
+  - mauriciod
+  - letiziab
+
+# Valid types: bespoke, scalable, replicable, or self-service
+# See go/gtech-file-type for more options
+#
+type: self-service
+
+# Valid statuses: in dev, complete, deprecated, or inactive
+# See go/gtech-file-status for more options
+#
+status: complete
+
+description: >
+  This chrome extension is crawling a webpage in search of floodlights and 
+  it generates a report. Authentication is required only to visualize the 
+  floodlight IDs and the Campaign Manager direct link.
+
+# A list of links to images for your solution.
+# Specify 'logo' or 'screenshot' so that portals can use your image correctly.
+#
+images:
+  - type: logo
+    url: https://screenshot.googleplex.com/DC2hOgTWyTs.png
+  - type: screenshot
+    url: https://screenshot.googleplex.com/dchQpi5Vg5v.png
+
+
+# Links to resources for your project. PRD, G3Doc, PLX, etc...
+# See go/gtech-file-links for more information and
+# go/gtech-file-links-checklist for suggestions.
+#
+links:
+  - name: Tool URL
+    url: https://chrome.google.com/webstore/a/google.com/detail/floodlightaudit/dngikooiclohddhindicgoebilpdeckf
+
+
+# Optional attribute for capturing impact metrics and tracking information.
+# For example, you could put 'Revenue Enabled' with an amount for the value
+# or 'GA' (Google Analytics) and the value is the tracking id.
+#
+#metrics:
+#  - type: GA
+#    value: UA-12456-01
+#    description: Tracking tag for adoption metrics.
+#  - type: Revenue Enabled
+#    value: 10M
+#    description: Total Revenue Enabled among Y customers in 2018.
+
+# List of tags to capture the solution purpose, product, tech stack,
+# data sources and more. See go/gtech-file-tags for more information
+# and go/gtech-file-tags-checklist for a list of classifiers.
+#
+tags:
+  - dv360
+  - ga
+  - floodlight
+  - account_hygiene
+  - conversion_tracking
+  - product_adoption
+  - reporting

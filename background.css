@@ -1,0 +1,17 @@
+body {
+  padding-top: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+
+#floodlight-dcm-report-table>tbody>tr>td,
+#floodlight-dcm-report-table>tbody>tr>td,
+#floodlight-dcm-report-table>tbody>tr>th,
+#floodlight-dcm-report-table>tfoot>tr>td,
+#floodlight-dcm-report-table>tfoot>tr>th,
+#floodlight-dcm-report-table>thead>tr>td,
+#floodlight-dcm-report-table>thead>tr>th {
+  max-width: 300px;
+  overflow-wrap: break-word ;
+}

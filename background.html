@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <title>Floodlight Report</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="background.css">
+
+  <script src="dcm.js"></script>
+  <script src="utils.js"></script>
+  <script src="report_entries.js"></script>
+  <script src="floodlightTracker.js"></script>
+  <script src="globalSiteTagVerification.js"></script>
+</head>
+
+<body>
+  <!-- Settings Panel -->
+  <div class="panel panel-info">
+    <div class="panel-heading">
+      <h3 class="panel-title">Settings</h3>
+    </div>
+    <div class="panel-body">
+      <div class="input-group">
+        <ul class="nav nav-pills">
+          <li id="li-doubleclick" role="presentation" class="active"><a href="#" id="btn-doubleclick">CampaignManager</a></li>
+          <li id="li-ga" role="presentation"><a href="#" id="btn-ga">GA360</a></li>
+        </ul>
+      </div>
+      <br />
+      <p>* = Required Fields</p>
+      <div class="input-group">
+        <span class="input-group-addon" id="basic-addon1">Domain*</span>
+        <input id="domain" type="text" required class="form-control" placeholder="mydomain.com" aria-describedby="basic-addon1">
+      </div>
+      <br />
+      <div class="input-group">
+          <span class="input-group-addon" id="basic-addon1">Linked Domains</span>
+          <input id="linked-domains" type="text" class="form-control" placeholder="E.g. linkdomain1.com, linkdomain2.com " aria-describedby="basic-addon1">
+        </div>
+      <br />
+      <div class="input-group">
+        <span class="input-group-addon" id="basic-addon1">Depth*</span>
+        <input id="depth" type="text" required class="form-control" value="10" placeholder="10" aria-describedby="basic-addon1">
+      </div>
+      <br />
+      <div class="input-group">
+        <span class="input-group-addon" id="basic-addon1">Load Time (seconds)*</span>
+        <input id="loadTime" type="text" required class="form-control" value="5" placeholder="5" aria-describedby="basic-addon1">
+      </div>
+      <br />
+      <div class="input-group">
+        <span class="input-group-addon" id="basic-addon1">ProfileID</span>
+        <input id="profileId" type="text" class="form-control" value="" placeholder="E.g. 1234567" aria-describedby="basic-addon1">
+      </div>
+      <br />
+      <div class="input-group">
+        <span class="input-group-addon" id="basic-addon1">CM AccountID</span>
+        <input id="accountId" type="text" class="form-control" value="" placeholder="E.g. 1234567" aria-describedby="basic-addon1">
+      </div>
+      <br />
+      <!-- Adding Floodlight Config/Advertiser Filter-->
+      <div class="input-group">
+        <span class="input-group-addon" id="basic-addon1">Floodlight Configuration ID</span>
+        <input id="floodlightConfigId" type="text" class="form-control" value="" placeholder="Comma-separated list, E.g. 1234567,2345678 " aria-describedby="basic-addon1">
+      </div>
+      <br />
+      <div id="user-params"> <!-- GCLID PARENT -->
+        <div class="input-group">
+          <span class="input-group-addon" id="basic-addon1">gclid</span>
+          <input id="gclid" type="text" class="form-control" value="" placeholder="E.g. Test-1234" aria-describedby="basic-addon1">
+        </div>
+        <br />
+        <div class="input-group">
+          <span class="input-group-addon" id="basic-addon1">gclsrc</span>
+          <input id="gclsrc" type="text" class="form-control" value="" placeholder="E.g. aw.ds" aria-describedby="basic-addon1">
+        </div>
+      </div> <!-- GCLID PARENT -->
+      <br />
+      <button id="run" type="button" class="btn btn-default btn-lg">
+        <span aria-hidden="true"></span> Run
+      </button>
+      <button id="stop" style="display:none" type="button" class="btn btn-default btn-lg">
+        <span aria-hidden="true"></span> Stop
+      </button>
+      <button id="download" type="button" class="btn btn-default btn-lg">
+        <span aria-hidden="true"></span> Download
+      </button>
+      <!-- <button id="next" style="display:none" type="button" class="btn btn-default btn-lg">
+        <span aria-hidden="true"></span> Next >>
+      </button> -->
+      <div style="padding: 8px">
+        <input type="checkbox" id="enable_manual" name="fancy-checkbox-primary" id="fancy-checkbox-primary" autocomplete="off"> Enable Manual Mode
+      </div>
+      <div style="padding: 8px">
+        <input type="checkbox" id="enable_tag_verification" name="fancy-checkbox-primary" id="fancy-checkbox-primary" autocomplete="off"> Enable Global Site Tag Verification
+      </div>
+      <div id="enable_tag_parent" style="padding: 8px">
+        <input type="checkbox" id="enable_tag_reset" name="fancy-checkbox-primary" id="fancy-checkbox-primary" autocomplete="off"> Reset Global Site Tag Per Webpage
+      </div>
+      <div style="padding: 8px">
+        <input type="checkbox" id="show_no_floodlight" name="fancy-checkbox-primary" id="fancy-checkbox-primary" autocomplete="off"> Show Pages with No Floodlight
+      </div>
+    </div>
+  </div>
+  <!-- Stats Panel -->
+  <div id="stats-panel" class="panel panel-info">
+    <div class="panel-heading">
+      <h3 class="panel-title">Stats</h3>
+    </div>
+    <div class="panel-body">
+      <table id="stats" >
+        <tr>
+          <td width="50" rowspan=3>
+            <img id="spinner" style="display:none" src="light_blue_material_design_loading.gif" width="50" /><br/>
+          </td>
+          <td>
+            Pages Found: <span id="pages-found"></span><br />
+            Pages Visited: <span id="pages-visited"></span><br />
+            Floodlight Tags Found: <span id="floodlight-tags"></span>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <!-- Global Site Tag Panel -->
+  <div id="global-site-panel" style="display: none" class="panel panel-primary">
+    <div class="panel-heading">
+      <h3 class="panel-title">Global Site Tag Verification </h3>
+    </div>
+    <div class="panel-body" style="max-height: 350px; overflow-y: auto">
+      <table id="network-call" class="table" >
+        <thead>
+            <tr>
+              <th>URL</th>
+              <th>AccountID(s)</th>
+              <th>Cookie(s)</th>
+            </tr>
+          </thead>
+          <tbody id="network-call-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Flood Light Site Panel -->
+  <div id="floodlight-site-panel" class="panel panel-primary">
+    <div class="panel-heading">
+      <h3 class="panel-title">Floodlight Report</h3>
+    </div>
+    <!-- DCM Floodlight Table -->
+    <div class="panel-body" style="max-height: 500px; overflow-x: auto">
+      <table id="floodlight-dcm-report-table" class="table">
+        <thead>
+          <tr>
+            <th>Page</th>
+            <th>Floodlight Advertiser</th>
+            <th>Floodlight ID</th>
+            <th>Floodlight Activity Tag</th>
+            <th>Floodlight Activity Group</th>
+            <th>Sales Order</th>
+            <th>Network Calls Verified</th>
+            <th>Event Snippet</th>
+            <th>Floodlight Cookie</th>
+            <th>Google Ads Cookie</th>
+            <th>auiddc</th>
+            <th>U Variables</th>
+          </tr>
+        </thead>
+        <tbody id="floodlight-dcm-report-body"></tbody>
+      </table>
+    </div>
+    <!-- GA Floodlight Table -->
+    <div class="panel-body" style="overflow-x: auto">
+      <table id="floodlight-ga-report-table" class="table" style="display: none">
+        <thead>
+          <tr>
+            <th>Page</th>
+            <th>GA ID</th>
+            <th>Interaction Type</th>
+          </tr>
+        </thead>
+        <tbody id="floodlight-ga-report-body"></tbody>
+      </table>
+    </div>
+  </div>
+</body>
+
+<script src="jquery.js"></script>
+<script src="floodlight_audit.js"></script>
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+  });
+</script>

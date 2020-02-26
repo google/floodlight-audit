@@ -22,9 +22,6 @@ function ReportEntries() {
   this.map = new Map();
 
   function computeEntrytKey(entry, mode) {
-    if (mode == 'ga') {
-      return entry.url + entry.gaId + entry.interactionType;
-    }
     return entry.url + entry.advertiser + entry.activity + entry.group;
   }
 

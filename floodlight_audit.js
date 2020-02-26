@@ -233,28 +233,6 @@ $(document).ready(function() {
     $("#domain").val(tab.url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n]+)/im)[1] || "");
   });
 
-  $("#btn-doubleclick").click(function(e) {
-    e.preventDefault();
-    $("#li-doubleclick").addClass("active");
-    $("#li-ga").removeClass("active");
-    $("#user-params").show();
-    $('#floodlight-dcm-report-table').show();
-    $('#floodlight-ga-report-table').hide();
-    mode = "doubleclick";
-  });
-
-  $("#btn-ga").click(function(e) {
-    e.preventDefault();
-    $("#li-ga").addClass("active");
-    $("#li-doubleclick").removeClass("active");
-    $("#user-params").hide();
-    document.getElementById('gclid').value = '';
-    document.getElementById('gclsrc').value = '';
-    $('#floodlight-dcm-report-table').hide();
-    $('#floodlight-ga-report-table').show();
-    mode = "ga";
-  });
-
   $("#enable_tag_verification").change(function() {
     var value = $(this).is(":checked");
     if(value) {
@@ -340,13 +318,6 @@ $(document).ready(function() {
             "https://*.fls.doubleclick.net/activityi*",
             "http://*.fls.doubleclick.net/activityi*"
           ];
-      } else if (mode == 'ga') {
-        urls = [
-          "https://www.google-analytics.com/collect*",
-          "http://www.google-analytics.com/collect*",
-          "https://www.google-analytics.com/r/collect*",
-          "http://www.google-analytics.com/r/collect*"
-        ];
       }
 
       ////////////////////// NEW FLOODLIGHT TRACKER START //////////////////////

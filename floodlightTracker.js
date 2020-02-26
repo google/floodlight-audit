@@ -50,9 +50,7 @@ class FloodlightTracker {
 
         if(mode === 'doubleclick') {
             this.extractDCMFloodlightData(page_url, event, floodlightConfigId);
-        } else if(mode === 'ga') {
-            this.extractGAFloodlightData(page_url, event, floodlightConfigId);
-        }
+        } 
     }
 
     addEmptyTrackerEntry = (mode, page_url) => {
@@ -79,14 +77,7 @@ class FloodlightTracker {
                     auiddc: 'None',
                     floodlightId: 'None'
                 };
-            } else if(mode === 'ga') {
-                this.tracker[page_url][0] = {
-                    id: id,
-                    page_url: page_url,
-                    gaId: 'None',
-                    interactionType: 'None'
-                };
-            }
+            } 
             this.addToTable(mode, this.tracker[page_url][0]);
         }
     }
@@ -210,9 +201,7 @@ class FloodlightTracker {
         var row = this.renderTrackerRow(mode, floodlight_obj);
         if(mode === 'doubleclick') {
             table = $('#floodlight-dcm-report-body');
-        } else if(mode === 'ga') {
-            table = $('#floodlight-ga-report-body');
-        }
+        } 
         if(table && row) {
             table.append(row);
         } else {
@@ -241,14 +230,7 @@ class FloodlightTracker {
             rowString += `<td id="${row.id}-auiddc">${row.auiddc || 'None'}</td>`;
             rowString += `<td id="${row.id}-uvars">${row.uvars || 'None'}</td>`;
             rowString += '</tr>';
-        } else if(mode === 'ga') {
-            table = $('#floodlight-ga-report-body');
-            rowString = `<tr id="${row.id}">`;
-            rowString += `<td>${row.page_url || 'None'}</td>`;
-            rowString += `<td>${row.gaId || 'None'}</td>`;
-            rowString += `<td>${row.interactionType || 'None'}</td>`;
-            rowString += '</tr>';
-        }
+        } 
         return rowString;
     }
 
@@ -266,13 +248,7 @@ class FloodlightTracker {
                 `"${flood.event_snippet || 'None'}","${flood.floodlight_cookie || 'None'}","${flood.google_ads_cookie || 'None'}","${flood.auiddc || 'None'}","${flood.uvars || 'None'}"\r\n`;
                 });
             });
-        } else if (mode == 'ga') {
-            output = 'Page,GA ID,Interaction Type\r\n';
-            Object.keys(this.tracker).forEach(page => {
-                var flood = this.tracker[page];
-                output += `"${flood.page_url}","${flood.gaId}","${flood.interactionType}"\r\n`;
-            });
-        }
+        } 
         return output;
     }
 

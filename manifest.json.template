@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "floodlight_audit",
   "version": "0.20",
-  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkfKNwfNbQEH5+kCIGgtiJgUAHuIZiAZZQNVmQysXQIVcyc+G8dPZAgGC3CXuVuogA7WBO/6B7Y4rFyAo43yDLR+yDqkT4KMs7U/9759WVZNHpX4wkp0sdubjN2zErRaRTE3C0rSiZ2EdR4vKrn3vJMavQoZdm47Cp6iu7G8xmYIWudP8N6Mr8OWFep2+iB5EGQ9oNjBX+eeYIgb7AUn3WWR1lC5thZ/9OZILLvZSKSYJC6RiC+QL/1gU9XGHdQPQWM6DeC14hqPaW4pfofKTChAcqZJe95Hj7GyE9VUJfknEfBkppkPQKm3q5Ncnm2kvlJ749+693TWJVcaXta7XKwIDAQAB",
+  "key": "your_key",
   "description": "A tool that crawls a webpage and generates a floodlight tag report",
   "browser_action": {
     "default_title": "Floodlight Audit",
@@ -13,7 +13,7 @@
     "48": "icon48.png",
     "128": "icon128.png"
   },
-  "author": "Mauricio Desiderio",
+  "author": "gTech",
   "permissions": [
     "activeTab",
     "identity",

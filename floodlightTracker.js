@@ -16,8 +16,6 @@ limitations under the License.
 Note that these code samples being shared are not official Google
 products and are not formally supported.
 ************************************************************************/
-
-
 class FloodlightTracker {
     constructor(profileId, accountId, gclid, showNoFloodlight) {
         this.tracker = {};

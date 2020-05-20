@@ -7,6 +7,8 @@ In this document, we will be outlining the installation, base functionality,
 features and way to use the floodlight audit tool that may come up in most use
 cases.
 
+This is not an officially supported Google product.
+
 ## License
 
 Copyright 2017 Google LLC

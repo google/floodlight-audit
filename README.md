@@ -32,18 +32,20 @@ are not formally supported.
 1.  Download/pull the source code to a local directory of your choosing.
 2.  Rename the manifest.json.template file at the root directory of the code to
     manifest.json.
-3.  Follow the instructions to generate a key here:
-    https://developer.chrome.com/apps/manifest/key
-4.  Enter your key in the key field of manifest.json.
-5.  Open a chrome browser window, navigate the extensions management page by
+3.  Open a chrome browser window, navigate the extensions management page by
     browsing to: chrome://extensions/
-6.  At the top of the page, on the left, click the “Load Unpacked Extension ...”
+4.  At the top of the page, on the left, click the “Load Unpacked Extension ...”
     button
-7.  Select the “floodlight_audit” folder created when you downloaded the source
+5.  Select the “floodlight-audit” folder created when you downloaded the source
     code.
-8.  The tool should now be installed, and a new icon should show in the
+6.  The tool should now be installed, and a new icon should show in the
     extensions toolbar on the top right corner of chrome.
-9.  Finally click the icon in the extension toolbar to open the tool.
+7.  Finally click the icon in the extension toolbar to open the tool.
+
+If the extension doesn't work due to chrome extensions restrictions in your
+organization you may be need to generate a key, follow instructions here: https://developer.chrome.com/apps/manifest/key
+
+Add a new "key" field in manifest.json and set the value to your key.
 
 ## User Interface
 

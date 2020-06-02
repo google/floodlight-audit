@@ -34,13 +34,14 @@ are not formally supported.
     manifest.json.
 3.  Open a chrome browser window, navigate the extensions management page by
     browsing to: chrome://extensions/
-4.  At the top of the page, on the left, click the “Load Unpacked Extension ...”
+4.  On the top right of the page flip the "Developer Mode" switch to on.
+5.  At the top of the page, on the left, click the “Load Unpacked Extension ...”
     button
-5.  Select the “floodlight-audit” folder created when you downloaded the source
+6.  Select the “floodlight-audit” folder created when you downloaded the source
     code.
-6.  The tool should now be installed, and a new icon should show in the
+7.  The tool should now be installed, and a new icon should show in the
     extensions toolbar on the top right corner of chrome.
-7.  Finally click the icon in the extension toolbar to open the tool.
+8.  Finally click the icon in the extension toolbar to open the tool.
 
 If the extension doesn't work due to chrome extensions restrictions in your
 organization you may be need to generate a key, follow instructions here: https://developer.chrome.com/apps/manifest/key

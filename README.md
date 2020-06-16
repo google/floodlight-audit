@@ -75,7 +75,10 @@ the Control panel.
     floodlights that a user may want to test. If empty then all floodlights will
     be recorded.
 
-5.  *Enable Manual Mode* - (defaults to off) If checked, the tool will run the
+5.  *URL Suffix* (optional) - Any value added to this field will be appended to
+    every URL visited by the extension.
+
+6.  *Enable Manual Mode* - (defaults to off) If checked, the tool will run the
     audit in manual mode meaning that it will not automatically visit and scrape
     web pages. Instead it will sit back passively and record any floodlight
     light activity as the user navigates through the website. Allows a user to

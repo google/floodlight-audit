@@ -92,7 +92,7 @@ function visit(tab, depth) {
   manual_enabled = $("#enable_manual").is(":checked");
   var url = getNextPage();
   // if tag reset enabled, add user paramaters to the next url in the graph
-  url = enable_tag_reset ? constructUrl(url) : url;
+  url = constructUrl(url, enable_tag_reset);
   hasFloodlight = false;
   currentUrl = url;
   // set url for global tag object
@@ -153,14 +153,18 @@ function visit(tab, depth) {
   }
 }
 
-function constructUrl(url) {
+function constructUrl(url, includeUserParams) {
   if(!url) return;
   var newUrl = url;
   var parameters = [];
-  var gclid = $('#gclid').val();
-  var gclsrc = $('#gclsrc').val();
-  if(gclid !== '') parameters.push(`gclid=${gclid}`);
-  if(gclsrc !== '') parameters.push(`gclsrc=${gclsrc}`);
+  if (includeUserParams) {
+    var gclid = $('#gclid').val();
+    var gclsrc = $('#gclsrc').val();
+    if(gclid !== '') parameters.push(`gclid=${gclid}`);
+    if(gclsrc !== '') parameters.push(`gclsrc=${gclsrc}`);
+  }
+  var urlsuffix = $('#urlsuffix').val();
+  if(urlsuffix !== '') parameters.push(`${urlsuffix.replace(/^\?/, '')}`);
   if(parameters.length > 0) {
     if(newUrl.match(/\?/)) {
       newUrl += `&${parameters.join('&')}`;
@@ -345,8 +349,8 @@ $(document).ready(function() {
       });
       ////////////////////// NEW FLOODLIGHT TRACKER END //////////////////////
 
-      // adds any user defined parameters (gclid || gclsrc) to base url before start
-      var baseUrl = constructUrl(tab.url);
+      // adds any user defined parameters to base url before start
+      var baseUrl = constructUrl(tab.url, true);
 
       // enable global tag verification if specified by the user
       if(global_tag_verification_enabled) {

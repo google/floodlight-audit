@@ -1,35 +1,40 @@
-/***********************************************************************
-Copyright 2017 Google LLC
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Note that these code samples being shared are not official Google
-products and are not formally supported.
-************************************************************************/
+/***************************************************************************
+*
+*  Copyright 2020 Google Inc.
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*      https://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Note that these code samples being shared are not official Google
+*  products and are not formally supported.
+*
+***************************************************************************/
 var mode = "doubleclick";
 
 var report = new ReportEntries();
 var globalTag = new GlobalTagVerification();
 var fl_call_tracker = new FloodlightTracker();
+var TAB_ID;
+var WIN_ID;
 
 var graph = {
   found: 0,
-  visited: 0
+  visited: 0,
 };
 
 var currentUrl = "";
-var max_depth = 10;
-var current_depth = 0;
+// var max_depth = 10;
+// var current_depth = 0;
+var loadTime = 6;
 var domain = "";
 var show_no_floodlight = false;
 var previousPage = null;
@@ -44,6 +49,8 @@ var enable_tag_reset = false;
 var manual_enabled = false;
 var floodlight_counter = 0;
 var floodlightConfigId = [];
+var behaviorInterval = null;
+var url_upload_array = null;
 
 $.urlParam = function(name){
   var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
@@ -78,6 +85,14 @@ function getNextPage() {
   return;
 }
 
+function urlExists(url) {
+  var http = new XMLHttpRequest();
+  http.addEventListener("error", (err) => {console.warn(`Error requesting page, url will be set to BROKEN: ${err} ${url}`)});
+  http.open('HEAD', url, false);
+  http.send();
+  return http.status >= 200 && http.status <= 302;
+}
+
 function checkUntracked(page) {
   if(
     page &&
@@ -88,69 +103,103 @@ function checkUntracked(page) {
   }
 }
 
-function visit(tab, depth) {
-  manual_enabled = $("#enable_manual").is(":checked");
-  var url = getNextPage();
-  // if tag reset enabled, add user paramaters to the next url in the graph
-  url = constructUrl(url, enable_tag_reset);
+function visit(tab) {
+  var nextUrl = getNextPage();
+  if(graph.found === 1) { // if tag reset enabled, add user paramaters to the next url in the graph
+    nextUrl = constructUrl(nextUrl, true);
+  } else { //always add gclid and gclsrc to first visit
+    nextUrl = constructUrl(nextUrl, enable_tag_reset);
+  }
+  console.log('Visit: ', nextUrl);
   hasFloodlight = false;
-  currentUrl = url;
-  // set url for global tag object
-  globalTag.setUrl(url);
-  if(url) {
-    chrome.tabs.executeScript(tab.id, {
-      code: 'window.location = "' + url + '"'
-    }, function(result) {
-      if(depth <= max_depth) {
-        chrome.tabs.executeScript(tab.id, {
-          "file": "injector.js"
-        }, function(result) {
-          if(chrome.runtime.lastError) {
-            console.warn('Error in loading url: ', url, chrome.runtime.lastError.message);
-          }
-          var links = result[0];
-          var domain_regex = new RegExp('(https|http)?:\/\/(.+?\.+)?' + domain.replace('.', '\\.'));
-          var domain_match = tab.url.match(domain_regex);
-          // TODO: might need to fix this in the future, figure out how to handle case when tab is in domain that
-          // does not match the original
-          var base_url = domain_match ? domain_match[0] : '';
-
-          for(var i = 0; i < links.length; i++) {
-            var link = links[i].substring(1, links[i].length - 1);
-            // filter out scraped links for only those that are expected
-            var url_match = link.match(domain_regex);
-            if(
-              (url_match || link.startsWith('/')) &&
-              !link.startsWith("mailto:") &&
-              !link.startsWith("//") &&
-              !link.startsWith('javascript:')
-            ) {
-              if(link.startsWith('/')) {
-                link = base_url + link;
-              }
-              if(!graph[link]) {
-                graph[link] = "FOUND";
-                graph.found++;
-                updateStats();
-              }
-            }
-          }
-        });
-      }
+  currentUrl = nextUrl;
+  if(nextUrl) {
+    // set url for global tag object
+    globalTag.setUrl(nextUrl);
+    chrome.tabs.update(tab.id, {
+      url: nextUrl
+    }, function() {
+      // NOTE: Scraping logic moved out of this because it required hacky workaround
+      // to function as expected. Scraping logic now lives in function scrapeLinks and
+      // runs on page load complete (function:: tabOnCompleteListener)
       setTimeout(() => {
-        // this makes sure we pass the updated tab to the next iteration of visit.
-        chrome.tabs.get(tab.id, function(updatedTab) {
-          current_depth += 1;
-          previousPage = currentUrl;
-          checkUntracked(previousPage);
-          visit(updatedTab, depth + 1);
-        })
-      }, $('#loadTime').val() * 1000);
+        if(chrome.runtime.lastError) {
+          console.warn('Error in loading url: ', url, chrome.runtime.lastError.message);
+          setTimeout(() => {
+            console.warn('Error on current page, visiting next page...')
+            driveVisit(tab, nextUrl)
+          }, 1500);
+        }
+        // code snippet to drive next visit after specified time limit
+        // else {
+        //   setTimeout(() => {
+        //     driveVisit(tab, currentUrl)
+        //   }, loadTime * 1000);
+        // }
+      }, 1000);
     });
   } else {
     checkUntracked(previousPage);
     stop();
   }
+}
+
+// function runs scraping script on target tab
+function scrapeLinks(targetTab) {
+  chrome.tabs.executeScript(targetTab.id, {
+    "file": "injector.js"
+  }, function(result) {
+    if(result) {
+      if(result.length > 0) {
+        var links = result[0];
+        var updatedURL = targetTab.url;
+        var currentDomainMatch = updatedURL.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n]+)/im);
+        var current_domain = currentDomainMatch[1];
+
+        // makes sure to get the current domain in which the scrpaed links are found
+        // so that it may correctly appended to relative links (eg. mycurrent.domain.com/#nav)
+        var current_base_url = currentDomainMatch ? currentDomainMatch[0] : '';
+
+        // var domain_regex = new RegExp('^(https|http)?:\/\/(.+?\.+)?' + domain.replace('.', '\\.')); // ORIGINAL
+        var domain_regex = new RegExp('^(https|http)?:\/\/(.+?\.+)?' + domain.replace('.', '\\.'));
+        // var domain_match = url.match(domain_regex);
+
+        // TODO: might need to fix this in the future, figure out how to handle case when tab is in domain that
+        // does not match the original
+        // var base_url = domain_match ? domain_match[0] : '';
+
+        for(var i = 0; i < links.length; i++) {
+          var link = links[i].substring(1, links[i].length - 1);
+          // filter out scraped links for only those that are expected and within the original domain
+          var url_match = link.match(domain_regex); //original
+          if(
+            (url_match || link.startsWith('/')) &&
+            !link.startsWith("mailto:") &&
+            !link.startsWith("//") &&
+            !link.startsWith('javascript:')
+          ) {
+            if(current_domain === domain && link.startsWith('/')) {
+              link = current_base_url + link;
+            } else if (current_domain != domain && link.startsWith('/')) {
+              link = null;
+            }
+            if(link && !graph[link]) {
+              graph[link] =  "FOUND";
+              graph.found++;
+              // if(urlExists(link)) {}
+              updateStats();
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function driveVisit(updatedTab, currentUrl) {
+    previousPage = currentUrl;
+    checkUntracked(previousPage);
+    visit(updatedTab);
 }
 
 function constructUrl(url, includeUserParams) {
@@ -179,22 +228,25 @@ function triggerNext() {
   $("#spinner").show();
   var tabId = Number($.urlParam("tabId"));
   chrome.tabs.get(tabId, function(tab) {
-    visit(tab, current_depth);
+    visit(tab);
   });
 }
 
 function stop() {
-  // updateReport();
-  // updateStats();
+  if (graph.found > 0) {
+    console.log('Audit has ended.');
+    console.log('Resulting data: ', graph, fl_call_tracker.tracker);
+  }
   graph = {
     found: 0,
     visited: 0
   };
-  current_depth = 0;
   $("#stop, #spinner, #next").hide();
   $("#run").show();
   globalTag.removeVerificationListener();
+  chrome.webRequest.onBeforeSendHeaders.removeListener(disableRequestCache)
   chrome.tabs.onUpdated.removeListener(passiveModeListener);
+  chrome.tabs.onUpdated.removeListener(tabOnCompleteListener);
   chrome.webRequest.onCompleted.removeListener(floodlightEventProxy);
   chrome.webRequest.onBeforeRedirect.removeListener(floodlightEventProxy);
 }
@@ -206,15 +258,29 @@ function passiveModeListener(id, changeInfo, tab) {
   var url_regex = new RegExp(domain);
   // if url change is initiated and within the specified domain
   // clear global tag table if applicable, and update current url variables
-  if(changeInfo.status === 'loading' && changeInfo.url) {
-    if(changeInfo.url.match(url_regex)){
-      previousPage = currentUrl;
+  if(changeInfo.status === 'complete' && changeInfo.url) {
+    var page_url = decodeURI(changeInfo.url);
+    if(page_url.match(url_regex)){
       checkUntracked(previousPage);
-      currentUrl = changeInfo.url;
-      globalTag.setUrl(changeInfo.url);
+      previousPage = currentUrl;
+      currentUrl = page_url;
+      // globalTag.setUrl(changeInfo.url);
     }
   }
 }
+
+
+// listener function to vefify that the tab has loaded completely and initiate visit 
+// to next page.
+function tabOnCompleteListener(id, changeInfo, tab) {
+  if (id === TAB_ID && changeInfo.status === 'complete') {
+    scrapeLinks(tab);
+    setTimeout(() => {
+      driveVisit(tab, currentUrl);
+    }, 1000)
+  }
+}
+
 
 function download(fileName, content) {
   var downloadLink = document.createElement("a");
@@ -228,12 +294,82 @@ function download(fileName, content) {
   document.body.removeChild(downloadLink);
 }
 
+// **************************************************************************
+// NOTE: below code sets up file input to listen for upload
+// and parse through expected CSV file for URLS. Need to add logic
+// for converting urls wildcards into RegExps 
+
+// function setupFileUploader() {
+//   var fileChooser = $('#fileInput');
+//   fileChooser.on('change', readFileContents);
+// }
+
+// function removeFileUploadListener() {
+//   var fileChooser = $('#fileInput');
+//   fileChooser.off('change', readFileContents);
+// }
+
+// function readFileContents(event) {
+//   var fileChooser = $('#fileInput');
+//   console.log('Event: ', event)
+//   var reader = new FileReader();
+//   reader.onload = function (e) {
+//     var split_data = e.target.result.split("\n");
+//     var data = [];
+//     split_data.forEach(row => {
+//       data.push(row.split(','));
+//     });
+//     console.log("File Contents ",  data);
+//     if(data.length > 0) {
+//       url_upload_array = data;
+//     }
+//   }
+//   reader.readAsText(fileChooser[0].files[0]);
+// }
+// 
+// function convertUrlToRegexp(url) {
+//   var new_regexp = url.replace(/\//g, '\/').replace(/\./g, '\.');
+// 	if (url.indexOf('*') != -1) { // if url contains wildcard
+//   	// replace wild card with RegExp Wildcard
+//     if(url.match(/^\*.+\*$/)) { } // starts and end in wildcard 
+//     else if(url.match(/^\*/)) { }// string starts with wildcard
+//     else if (url.match(/\*$/)) { } // ends with wildcard
+//   }
+//   var res = new RegExp(new_regexp, "g");
+//   return res;
+// }
+// **************************************************************************
+
+function updateBehavior() {
+  chrome.webRequest.handlerBehaviorChanged(() => {
+    console.log('Web request handler behavior has been changed, clearing cache.');
+  });
+}
+
+function disableRequestCache(details) {
+  var headers = details.requestHeaders || [];
+  headers.push({
+      "name": "Cache-Control",
+      "value": "no-cache"
+  });
+  return {requestHeaders: headers};
+}
+
 $(document).ready(function() {
+  var gclidElement = document.getElementById("gclid");
+  var gclidVal = document.createTextNode("Test-" + Math.floor((Math.random() * 1000) + 1));
+  gclidElement.appendChild(gclidVal);
+  
+  //NOTE: uncomment below when file upload is implemented
+  // remove any previous listener that may still be attached
+  // removeFileUploadListener();
+  // attach new file upload listener to the file input elelment
+  // setupFileUploader();
 
-  var tabId = Number($.urlParam("tabId"));
-  var winId = Number($.urlParam("winId"));
+  TAB_ID = Number($.urlParam("tabId"));
+  WIN_ID = Number($.urlParam("winId"));
 
-  chrome.tabs.get(tabId, function(tab) {
+  chrome.tabs.get(TAB_ID, function(tab) {
     $("#domain").val(tab.url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n]+)/im)[1] || "");
   });
 
@@ -261,16 +397,21 @@ $(document).ready(function() {
     var gstOutput = globalTag.printGlobalSiteTable();
     var date = new Date().toString().replace(/\s/g, "");
     download(`${domain}-${mode}-floodlight-report-${date}.csv`, floodlightOutput);
-    download(`${domain}-gst-report-${date}.csv`, gstOutput);
+    if(global_tag_verification_enabled) {
+      download(`${domain}-gst-report-${date}.csv`, gstOutput);
+    }
   });
 
   $("#stop").click(() => {
+    //update behavior every 3 mins
+    window.clearTimeout(behaviorInterval)
+    behaviorInterval = null;
     stop();
   });
 
   $("#run").click(function() {
     // pull values from form elements
-    gclid = $('#gclid').val();
+    gclid = document.getElementById('gclid').innerText
     profileId = $("#profileId").val();
     accountId = $("#accountId").val();
     var fl_config_value = $("#floodlightConfigId").val();
@@ -279,23 +420,24 @@ $(document).ready(function() {
         fl_config_value.replace(/\s/g, '').split(",") :
         [];
     domain = $("#domain").val();
-    max_depth = parseInt($("#depth").val());
     manual_enabled = document.getElementById("enable_manual").checked; //////TEST
     show_no_floodlight = document.getElementById("show_no_floodlight").checked;
     global_tag_verification_enabled = document.getElementById("enable_tag_verification").checked;
     enable_tag_reset = document.getElementById("enable_tag_reset").checked;
 
+    updateStats();
     // hide/show UI elements for run state
     $("#run").hide();
     $("#stop").show();
     $("#spinner").show();
-    $('#floodlight-dcm-report-body, #floodlight-ga-report-body').html("");
+    $('#floodlight-dcm-report-body').html("");
 
     localStorage.setItem("report", "");
     report = new ReportEntries();
     // clear global tag table values and event listeners
     globalTag.globalVerificationReset();
     chrome.tabs.onUpdated.removeListener(passiveModeListener);
+    chrome.tabs.onUpdated.removeListener(tabOnCompleteListener);
 
     // reset floodlight tracker object and counter
     fl_call_tracker.clearTracker();
@@ -308,7 +450,7 @@ $(document).ready(function() {
       dcMode = 'authentication';
     }
 
-    chrome.tabs.get(tabId, function(tab) {
+    chrome.tabs.get(TAB_ID, function(tab) {
       currentUrl = tab.url;
       // clear first party cookies before initial run
       globalTag.clearFirstPartyCookies(currentUrl, domain);
@@ -325,6 +467,20 @@ $(document).ready(function() {
       }
 
       ////////////////////// NEW FLOODLIGHT TRACKER START //////////////////////
+      chrome.webRequest.onBeforeSendHeaders.addListener(
+        disableRequestCache,
+        { "urls": [
+          ...urls,
+          "http://adservice.google.com/*",
+          "https://adservice.google.com/*",
+          "http://adservice.google.com/ddm/*",
+          "https://adservice.google.com/ddm/*",
+          "https://*.fls.doubleclick.net/activityi*",
+          "http://*.fls.doubleclick.net/activityi*",
+          "http://stats.g.doubleclick.net/r/collect/*",
+          "https://stats.g.doubleclick.net/r/collect/*"
+        ] 
+      });
       // setup floodlight tracking on completed(200) network calls
       chrome.webRequest.onCompleted.addListener(
         floodlightEventProxy, {
@@ -349,29 +505,33 @@ $(document).ready(function() {
       });
       ////////////////////// NEW FLOODLIGHT TRACKER END //////////////////////
 
-      // adds any user defined parameters to base url before start
-      var baseUrl = constructUrl(tab.url, true);
+      // adds any user defined parameters (gclid || gclsrc) to base url before start
+      var baseUrl = manual_enabled ? constructUrl(tab.url, enable_tag_reset) : tab.url;
 
       // enable global tag verification if specified by the user
       if(global_tag_verification_enabled) {
-        globalTag.setUrl(baseUrl);
-        globalTag.setTabId(tabId);
-        globalTag.globalVerificationSetup();
+        globalTag.globalVerificationSetup(baseUrl, TAB_ID, gclid);
       }
+
+      updateBehavior();
+      //update behavior every 3 mins
+      behaviorInterval = window.setTimeout(updateBehavior, 180000);
 
       // if manual mode is enabled, run initial step for tool's manual mode
       if(manual_enabled){
         chrome.tabs.onUpdated.addListener(passiveModeListener);
         currentUrl = baseUrl;
-        chrome.tabs.executeScript(tabId, {
-          code: 'window.location = "' + baseUrl + '"'
+        chrome.tabs.update(TAB_ID, {
+          url: baseUrl
         });
       } else {
         // else run initial step for tool's automatic mode
         graph[baseUrl] = "FOUND";
+        graph.found += 1;
         console.log('ON RUN graph state:', graph);
-
-        visit(tab, 0);
+        // adds listener to wait for page to load completely before moving to the next page
+        chrome.tabs.onUpdated.addListener(tabOnCompleteListener);
+        visit(tab);
       }
     });
   });

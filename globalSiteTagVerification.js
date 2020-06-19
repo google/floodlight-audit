@@ -1,21 +1,23 @@
-/***********************************************************************
-Copyright 2017 Google LLC
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Note that these code samples being shared are not official Google
-products and are not formally supported.
-************************************************************************/
+/***************************************************************************
+*
+*  Copyright 2020 Google Inc.
+*
+*  Licensed under the Apache License, Version 2.0 (the "License");
+*  you may not use this file except in compliance with the License.
+*  You may obtain a copy of the License at
+*
+*      https://www.apache.org/licenses/LICENSE-2.0
+*
+*  Unless required by applicable law or agreed to in writing, software
+*  distributed under the License is distributed on an "AS IS" BASIS,
+*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*  See the License for the specific language governing permissions and
+*  limitations under the License.
+*
+*  Note that these code samples being shared are not official Google
+*  products and are not formally supported.
+*
+***************************************************************************/
 
 class GlobalTagVerification {
     constructor() {
@@ -24,14 +26,28 @@ class GlobalTagVerification {
         this.isLoading = false;
         this.globalSiteTags = {};
         this.id = 0;
+        this.gclid = null;
     }
 
     setUrl = (url) => {
         this.verification_url = url;
+        if(!this.globalSiteTags.hasOwnProperty(url)) {
+            this.globalSiteTags[url] = {
+                id: this.id,
+                url: url,
+                tags: [],
+                cookies: []
+            }
+            this.id += 1;
+        }
     }
 
     setTabId = (id) => {
         this.verification_tab_id = id;
+    }
+
+    setGclid = (newGclid) => {
+        this.gclid = newGclid;
     }
 
     /**
@@ -39,7 +55,19 @@ class GlobalTagVerification {
      * listeners for the current instance.
      *
      */
-    globalVerificationSetup = () => {
+    globalVerificationSetup = (url, tabId, gclid) => {
+        this.setUrl(url);
+        this.setTabId(tabId);
+        this.setGclid(gclid);
+        // add no-cache headers onto outgoing requests to
+        // prevent tham from being cached
+        chrome.webRequest.onBeforeSendHeaders.addListener(
+            this.disableRequestCache,
+            { "urls": [
+                "http://www.googletagmanager.com/*",
+                "https://www.googletagmanager.com/*"
+            ] }
+        );
         chrome.webRequest.onCompleted.addListener(
             this.verificationProxy,
             { "urls": [
@@ -73,6 +101,7 @@ class GlobalTagVerification {
      */
     removeVerificationListener = () => {
         // chrome.webRequest.onCompleted.removeListener(this.globalTagVerification)
+        chrome.webRequest.onBeforeSendHeaders.removeListener(this.disableRequestCache)
         chrome.webRequest.onCompleted.removeListener(this.verificationProxy)
         chrome.tabs.onUpdated.removeListener(this.cookieVerification)
     }
@@ -83,7 +112,6 @@ class GlobalTagVerification {
      *
      */
     clearGlobalSiteTables = () => {
-        console.log('CLEAR SITE TABLES', this.isLoading);
         $('#first-party-cookie-body, #network-call-body, #global-site-panel-url').html("");
     }
 
@@ -103,19 +131,17 @@ class GlobalTagVerification {
     }
 
     printGlobalSiteTable = () => {
-        if(this.globalSiteTags) {
-            var output = 'URL,AccountIDs,Cookies\r\n'
-            Object.keys(this.globalSiteTags).forEach(page => {
-                var tags = this.globalSiteTags[page].tags.length > 0
-                    ? `${this.globalSiteTags[page].tags.join('; ')}`
-                    : null;
-                var cookies = this.globalSiteTags[page].cookies.length > 0
-                    ?  `${this.globalSiteTags[page].cookies.join('; ')}`
-                    : null;
-                output += `${this.globalSiteTags[page].url || 'None'},${tags || 'None'},${cookies || 'None'}\r\n`;
-            });
-            return output;
-        }
+        var output = 'URL,AccountIDs,Cookies\r\n'
+        Object.keys(this.globalSiteTags).forEach(page => {
+            var tags = this.globalSiteTags[page].tags.length > 0
+                ? `${this.globalSiteTags[page].tags.join('; ')}`
+                : null;
+            var cookies = this.globalSiteTags[page].cookies.length > 0
+                ?  `${this.globalSiteTags[page].cookies.join('; ')}`
+                : null;
+            output += `${this.globalSiteTags[page].url || 'None'},${tags || 'None'},${cookies || 'None'}\r\n`;
+        });
+        return output;
     }
 
     /**
@@ -142,23 +168,23 @@ class GlobalTagVerification {
             row += "</tr>" // end row
         }
         table = $(`#${tableName}-body`);
-        // console.log('add GST row: ', $(`#${tableName}-body tr`).length, row)
         if(table && row) {
             table.append(row);
         }
     }
 
     addGlobalSiteTag = (url) => {
-        var id = this.globalSiteTags[url].id;
+        var page_url = decodeURI(url);
+        var id = this.globalSiteTags[page_url].id;
         var table = $('#network-call-body');
         // var element = $(`td#${id}_tag`);
         var element = $(`tr#global_tag_${id}`);
-        var tags = this.globalSiteTags[url].tags.length > 0 ?
-            this.globalSiteTags[url].tags.join(',</br>') : 'None';
-        var cookies = this.globalSiteTags[url].cookies.length > 0 ?
-            this.globalSiteTags[url].cookies.join(',</br>') : 'None';
+        var tags = this.globalSiteTags[page_url].tags.length > 0 ?
+            this.globalSiteTags[page_url].tags.join(',</br>') : 'None';
+        var cookies = this.globalSiteTags[page_url].cookies.length > 0 ?
+            this.globalSiteTags[page_url].cookies.join(',</br>') : 'None';
         var content;
-        content = `<td id="${id}_url">${url}</td>`;
+        content = `<td id="${id}_url">${page_url}</td>`;
         content += `<td id="${id}_tag">${tags}</td>`;
         content += `<td id="${id}_cookie">${cookies}</td>`;
         if(element.length > 0) {
@@ -190,6 +216,14 @@ class GlobalTagVerification {
         ).join('|');
     }
 
+    disableRequestCache = (details) => {
+        var headers = details.requestHeaders || [];
+        headers.push({
+            "name": "Cache-Control",
+            "value": "no-cache"
+        });
+        return {requestHeaders: headers};
+    }
 
     /**
      * Pulls all necesary form data to funnel network event into the global
@@ -202,12 +236,8 @@ class GlobalTagVerification {
     verificationProxy = (event) => {
         var verification_enabled = document.getElementById("enable_tag_verification").checked;
         var manual_set = document.getElementById("enable_manual").checked;
-        var linked_domains = document.getElementById('linked-domains').value;
-        var linked_domain_list = this.formatDomains(linked_domains);
-        var domain_regex = linked_domain_list ?
-            new RegExp(`${domain.replace('.', '\\.')}|${linked_domain_list}`) :
-            new RegExp(`${domain.replace('.', '\\.')}`);
         if(verification_enabled) {
+            var domain_regex = new RegExp(`${domain.replace('.', '\\.')}`);
             if(manual_set) {
                 if(event.initiator.match(domain_regex)) {
                     this.globalTagVerification(event, event.tabId)
@@ -228,16 +258,17 @@ class GlobalTagVerification {
     globalTagVerification = (event, tab_id) => {
         chrome.tabs.get(tab_id, (t) => {
             // $('#global-site-panel-url').html(t.url);
-            if(!this.globalSiteTags.hasOwnProperty(t.url)) {
-                this.globalSiteTags[t.url] = {
+            var page_url = decodeURI(t.url);
+            if(!this.globalSiteTags.hasOwnProperty(page_url)) {
+                this.globalSiteTags[page_url] = {
                     id: this.id,
-                    url: t.url,
+                    url: page_url,
                     tags: [],
                     cookies: []
                 }
                 this.id += 1;
             }
-            this.parseTagManager(t.url, event);
+            this.parseTagManager(page_url, event);
         });
     }
 
@@ -249,21 +280,16 @@ class GlobalTagVerification {
      * @param {Event} event - webrequest chrome event.
      *
      */
-    parseTagManager = (tabUrl, event) => {
+    parseTagManager = (page_url, event) => {
         var u = event.url;
         var val;
         if(u.match(/googletagmanager\.com/)) {
-            if(u.match(/js\?id\=DC-*/)){// && event.statusCode === 200) {
-                val = u.match(/js\?id\=([\w-]*)/);
-            } else if(u.match(/js\?id\=GTM-*/)){// && event.statusCode === 200) {
-                val = u.match(/js\?id\=([\w-]*)/);
-            } else if(u.match(/js\?id\=AW-*/)){// && event.statusCode === 200) {
-                val = u.match(/js\?id\=([\w-]*)/);
-            }
+            // previous logic - u.match(/js\?id\=([\w-]*)/) && event.statusCode === 200
+            val = u.match(/js\?id\=([\w-]*)/);
             if(val) {
-                if(this.globalSiteTags[tabUrl].tags.indexOf(val[1]) === -1) {
-                    this.globalSiteTags[tabUrl].tags.push(val[1]);
-                    this.addGlobalSiteTag(tabUrl);
+                if(this.globalSiteTags[page_url].tags.indexOf(val[1]) === -1) {
+                    this.globalSiteTags[page_url].tags.push(val[1]);
+                    this.addGlobalSiteTag(page_url);
                 }
             }
         }
@@ -281,36 +307,36 @@ class GlobalTagVerification {
      * @param {Object} tab - Gives the state of the tab that was updated.
      *
      */
-    cookieVerification = (id, changeInfo, tab) => {
-        // console.log('\n::cookieVerification: ', id, changeInfo, tab)
-        var linked_domains = document.getElementById('linked-domains').value;
-        var linked_domain_list = this.formatDomains(linked_domains);
-        var domain_regex = linked_domain_list ?
-            new RegExp(`${domain.replace('.', '\\.')}|${linked_domain_list}`):
-            new RegExp(domain.replace('.', '\\.'));
-        // var domain_regex = new RegExp(domain);
+    cookieVerification = (updated_tab_id, changeInfo, tab) => {
+        // +++++++++ DO NOT REMOVE - may revisit this logic in the future +++++++++ //
+        // ++++++++++++++ Also used int verificationProxy() function ++++++++++++++ //
+        // var linked_domains = document.getElementById('linked-domains').value;
+        // var linked_domain_list = this.formatDomains(linked_domains);
+        // var domain_regex = linked_domain_list ?
+        //     new RegExp(`(\w*\d*.)?${domain.replace('.', '\\.')}|${linked_domain_list}`):
+        //     new RegExp(`(\w*\d*.)?${domain.replace('.', '\\.')}`);
+        // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ //
+        
         var verification_enabled = document.getElementById("enable_tag_verification").checked;
         var tag_reset_enabled = document.getElementById("enable_tag_reset").checked;
         var manual_set = document.getElementById("enable_manual").checked;
+        
         if(verification_enabled) {
+            // generate regex to match incoming tab url with top level domain
+            var tab_url =  decodeURI(tab.url);
+            var domain_regex = new RegExp(`(\w*\d*\.)?${domain.replace('.', '\\.')}`);
+            var domain_match = tab_url.match(domain_regex)
             if (manual_set) {
-                if(changeInfo.status === 'complete' && tab.url.match(domain_regex)) {
-                    // console.log('\n::cookieVerification: ', domain_regex, id, changeInfo, tab)
-                    var passed_domain = tab.url.match(domain_regex)[0];
-                    this.updateCookies(passed_domain, tab.url);
+                if(changeInfo.status === 'complete' && domain_match) {
+                    this.updateCookies(domain, tab_url);
                 }
             } else {
-                if(id === this.verification_tab_id && changeInfo.status === 'loading' && changeInfo.url) {
-                    // this.clearGlobalSiteTables();
-                    if(tag_reset_enabled) {
-                        var current_domain = document.getElementById('domain').value;
-                        this.clearFirstPartyCookies(tab.url, current_domain);
+                if(updated_tab_id === this.verification_tab_id){
+                    if(tag_reset_enabled && changeInfo.status === 'loading' && changeInfo.url) {
+                        this.clearFirstPartyCookies(tab_url, domain);
+                    }else if(changeInfo.status && domain_match) { //&& tab_url === verification_url) {
+                        this.updateCookies(domain, tab_url);
                     }
-                }
-                if(id === this.verification_tab_id && changeInfo.status === 'complete' && tab.url.match(domain_regex)) { //&& tab.url === verification_url) {
-                    var passed_domain = tab.url.match(domain_regex)[0];
-                    // console.log('\n::cookieVerification: ', domain_regex, id, changeInfo, tab)
-                    this.updateCookies(passed_domain, tab.url);
                 }
             }
         }
@@ -325,7 +351,7 @@ class GlobalTagVerification {
      *
      */
     updateCookies = (current_domain, url) => {
-        var gclid = $('#gclid').val() !== '' ? $('#gclid').val() : null;
+        // var gclid = $('#gclid').val() !== '' ? $('#gclid').val() : null;
         chrome.cookies.getAll({ domain: current_domain }, (cks) => {
             var cookie_map = {
                 dc_cookie: null,
@@ -334,10 +360,10 @@ class GlobalTagVerification {
             cks.forEach(c => {
                 // if cookie name matches _gcl_dc/_gcl_aw and its values contains
                 // the gclid value, capture it.
-                if(c.name.indexOf('_gcl_dc') >= 0 && c.value.indexOf(gclid) >= 0) {
+                if(c.name.indexOf('_gcl_dc') >= 0 && c.value.indexOf(this.gclid) >= 0) {
                     cookie_map.dc_cookie = c;
                 }
-                if(c.name.indexOf('_gcl_aw') >= 0 && c.value.indexOf(gclid) >= 0) {
+                if(c.name.indexOf('_gcl_aw') >= 0 && c.value.indexOf(this.gclid) >= 0) {
                     cookie_map.aw_cookie = c;
                 }
             });

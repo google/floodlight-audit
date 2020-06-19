@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "floodlight_audit",
-  "version": "0.20",
+  "version": "0.27",
   "description": "A tool that crawls a webpage and generates a floodlight tag report",
   "browser_action": {
     "default_title": "Floodlight Audit",

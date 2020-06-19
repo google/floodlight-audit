@@ -18,24 +18,14 @@
 *  products and are not formally supported.
 *
 ***************************************************************************/
-$(document).ready(function() {
-  var table = $("#report");
-  var report = JSON.parse(localStorage.getItem("report"));
-
-  for(var i = 0; i < report.length; i++) {
-    var tag = report[i];
-
-    var row = "<tr>";
-
-    row += "<td>" + tag.url + "</td>";
-    row += "<td>" + tag.advertiser + "</td>";
-    row += "<td>" + tag.floodlightId + "</td>";
-    row += "<td>" + tag.floodlightUrl + "</td>";
-    row += "<td>" + tag.activity + "</td>";
-    row += "<td>" + tag.group + "</td>";
-    row += "<td>" + tag.order + "</td>";
-    row += "</tr>";
-
-    table.append(row);
-  }
+document.body.addEventListener('click', function(event) {
+    if(event.path) {
+        event.path.forEach(function(item) {
+            if(item.localName === 'a' && item.href) {
+                event.preventDefault();
+                chrome.runtime.sendMessage(item.href);
+                return;
+            }
+        });
+    }
 });

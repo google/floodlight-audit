@@ -26,10 +26,15 @@ var fl_call_tracker = new FloodlightTracker();
 var TAB_ID;
 var WIN_ID;
 
-var graph = {
-  found: 0,
-  visited: 0,
+var graph = null
+
+function resetGraph() {
+  graph = {
+    found: 0,
+    visited: 0,
+  };
 };
+resetGraph();
 
 var currentUrl = "";
 // var max_depth = 10;
@@ -50,7 +55,11 @@ var manual_enabled = false;
 var floodlight_counter = 0;
 var floodlightConfigId = [];
 var behaviorInterval = null;
-var url_upload_array = null;
+
+// Determines if the page should be scraped for links, if false it will only
+// visit links already on the graph. For instance, if the user uploads a file
+// with URLs and only those should be visited this is flipped to false
+var discovery = true;
 
 $.urlParam = function(name){
   var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
@@ -67,7 +76,7 @@ function floodlightEventProxy(event) {
   // tacks on current url as a parameter for
   // floodlight tracking function
   chrome.tabs.get(event.tabId, (tab) => {
-    fl_call_tracker.addToTracker(domain, mode, tab.url, event, floodlightConfigId)
+    fl_call_tracker.addToTracker(discovery ? domain : '', mode, tab.url, event, floodlightConfigId)
   });
 }
 
@@ -146,54 +155,56 @@ function visit(tab) {
 
 // function runs scraping script on target tab
 function scrapeLinks(targetTab) {
-  chrome.tabs.executeScript(targetTab.id, {
-    "file": "injector.js"
-  }, function(result) {
-    if(result) {
-      if(result.length > 0) {
-        var links = result[0];
-        var updatedURL = targetTab.url;
-        var currentDomainMatch = updatedURL.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n]+)/im);
-        var current_domain = currentDomainMatch[1];
+  if(discovery) {
+    chrome.tabs.executeScript(targetTab.id, {
+      "file": "injector.js"
+    }, function(result) {
+      if(result) {
+        if(result.length > 0) {
+          var links = result[0];
+          var updatedURL = targetTab.url;
+          var currentDomainMatch = updatedURL.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n]+)/im);
+          var current_domain = currentDomainMatch[1];
 
-        // makes sure to get the current domain in which the scrpaed links are found
-        // so that it may correctly appended to relative links (eg. mycurrent.domain.com/#nav)
-        var current_base_url = currentDomainMatch ? currentDomainMatch[0] : '';
+          // makes sure to get the current domain in which the scrpaed links are found
+          // so that it may correctly appended to relative links (eg. mycurrent.domain.com/#nav)
+          var current_base_url = currentDomainMatch ? currentDomainMatch[0] : '';
 
-        // var domain_regex = new RegExp('^(https|http)?:\/\/(.+?\.+)?' + domain.replace('.', '\\.')); // ORIGINAL
-        var domain_regex = new RegExp('^(https|http)?:\/\/(.+?\.+)?' + domain.replace('.', '\\.'));
-        // var domain_match = url.match(domain_regex);
+          // var domain_regex = new RegExp('^(https|http)?:\/\/(.+?\.+)?' + domain.replace('.', '\\.')); // ORIGINAL
+          var domain_regex = new RegExp('^(https|http)?:\/\/(.+?\.+)?' + domain.replace('.', '\\.'));
+          // var domain_match = url.match(domain_regex);
 
-        // TODO: might need to fix this in the future, figure out how to handle case when tab is in domain that
-        // does not match the original
-        // var base_url = domain_match ? domain_match[0] : '';
+          // TODO: might need to fix this in the future, figure out how to handle case when tab is in domain that
+          // does not match the original
+          // var base_url = domain_match ? domain_match[0] : '';
 
-        for(var i = 0; i < links.length; i++) {
-          var link = links[i].substring(1, links[i].length - 1);
-          // filter out scraped links for only those that are expected and within the original domain
-          var url_match = link.match(domain_regex); //original
-          if(
-            (url_match || link.startsWith('/')) &&
-            !link.startsWith("mailto:") &&
-            !link.startsWith("//") &&
-            !link.startsWith('javascript:')
-          ) {
-            if(current_domain === domain && link.startsWith('/')) {
-              link = current_base_url + link;
-            } else if (current_domain != domain && link.startsWith('/')) {
-              link = null;
-            }
-            if(link && !graph[link]) {
-              graph[link] =  "FOUND";
-              graph.found++;
-              // if(urlExists(link)) {}
-              updateStats();
+          for(var i = 0; i < links.length; i++) {
+            var link = links[i].substring(1, links[i].length - 1);
+            // filter out scraped links for only those that are expected and within the original domain
+            var url_match = link.match(domain_regex); //original
+            if(
+              (url_match || link.startsWith('/')) &&
+              !link.startsWith("mailto:") &&
+              !link.startsWith("//") &&
+              !link.startsWith('javascript:')
+            ) {
+              if(current_domain === domain && link.startsWith('/')) {
+                link = current_base_url + link;
+              } else if (current_domain != domain && link.startsWith('/')) {
+                link = null;
+              }
+              if(link && !graph[link]) {
+                graph[link] =  "FOUND";
+                graph.found++;
+                // if(urlExists(link)) {}
+                updateStats();
+              }
             }
           }
         }
       }
-    }
-  });
+    });
+  }
 }
 
 function driveVisit(updatedTab, currentUrl) {
@@ -237,10 +248,7 @@ function stop() {
     console.log('Audit has ended.');
     console.log('Resulting data: ', graph, fl_call_tracker.tracker);
   }
-  graph = {
-    found: 0,
-    visited: 0
-  };
+  resetGraph();
   $("#stop, #spinner, #next").hide();
   $("#run").show();
   globalTag.removeVerificationListener();
@@ -298,46 +306,50 @@ function download(fileName, content) {
 // NOTE: below code sets up file input to listen for upload
 // and parse through expected CSV file for URLS. Need to add logic
 // for converting urls wildcards into RegExps 
+function setupFileUploader() {
+  var fileChooser = $('#fileInput');
+  fileChooser.on('change', readFileContents);
+}
 
-// function setupFileUploader() {
-//   var fileChooser = $('#fileInput');
-//   fileChooser.on('change', readFileContents);
-// }
+function removeFileUploadListener() {
+  var fileChooser = $('#fileInput');
+  fileChooser.off('change', readFileContents);
+}
 
-// function removeFileUploadListener() {
-//   var fileChooser = $('#fileInput');
-//   fileChooser.off('change', readFileContents);
-// }
+function readFileContents(event) {
+  discovery = true;
+  resetGraph();
+  var fileChooser = $('#fileInput');
 
-// function readFileContents(event) {
-//   var fileChooser = $('#fileInput');
-//   console.log('Event: ', event)
-//   var reader = new FileReader();
-//   reader.onload = function (e) {
-//     var split_data = e.target.result.split("\n");
-//     var data = [];
-//     split_data.forEach(row => {
-//       data.push(row.split(','));
-//     });
-//     console.log("File Contents ",  data);
-//     if(data.length > 0) {
-//       url_upload_array = data;
-//     }
-//   }
-//   reader.readAsText(fileChooser[0].files[0]);
-// }
-// 
-// function convertUrlToRegexp(url) {
-//   var new_regexp = url.replace(/\//g, '\/').replace(/\./g, '\.');
-// 	if (url.indexOf('*') != -1) { // if url contains wildcard
-//   	// replace wild card with RegExp Wildcard
-//     if(url.match(/^\*.+\*$/)) { } // starts and end in wildcard 
-//     else if(url.match(/^\*/)) { }// string starts with wildcard
-//     else if (url.match(/\*$/)) { } // ends with wildcard
-//   }
-//   var res = new RegExp(new_regexp, "g");
-//   return res;
-// }
+  if(fileChooser[0].files.length) {
+    console.log('Event: ', event)
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var split_data = e.target.result.split("\n");
+      var data = [];
+      split_data.forEach(row => {
+        data.push(row.split(','));
+      });
+      if(data.length > 0) {
+        buildGraphFromFile(data);
+        discovery = false;
+      }
+    }
+    reader.readAsText(fileChooser[0].files[0]);
+  }
+}
+
+function buildGraphFromFile(urls) {
+  for(var i = 0; i < urls.length; i++) {
+    if(urls.length > 0) {
+      var url = urls[i][0];
+      if(!graph[url]) {
+        graph[url] = "FOUND";
+        graph.found++;
+      }
+    }
+  }
+}
 // **************************************************************************
 
 function updateBehavior() {
@@ -359,12 +371,9 @@ $(document).ready(function() {
   var gclidElement = document.getElementById("gclid");
   var gclidVal = document.createTextNode("Test-" + Math.floor((Math.random() * 1000) + 1));
   gclidElement.appendChild(gclidVal);
-  
-  //NOTE: uncomment below when file upload is implemented
-  // remove any previous listener that may still be attached
-  // removeFileUploadListener();
-  // attach new file upload listener to the file input elelment
-  // setupFileUploader();
+
+  removeFileUploadListener();
+  setupFileUploader();
 
   TAB_ID = Number($.urlParam("tabId"));
   WIN_ID = Number($.urlParam("winId"));

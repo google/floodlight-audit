@@ -224,7 +224,9 @@ function constructUrl(url, includeUserParams) {
     if(gclsrc !== '') parameters.push(`gclsrc=${gclsrc}`);
   }
   var urlsuffix = $('#urlsuffix').val();
-  if(urlsuffix !== '') parameters.push(`${urlsuffix.replace(/^\?/, '')}`);
+  if(urlsuffix !== '' && !newUrl.includes(urlsuffix)) {
+    parameters.push(`${urlsuffix.replace(/^\?/, '')}`);
+  }
   if(parameters.length > 0) {
     if(newUrl.match(/\?/)) {
       newUrl += `&${parameters.join('&')}`;

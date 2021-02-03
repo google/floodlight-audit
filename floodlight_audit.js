@@ -473,7 +473,13 @@ $(document).ready(function() {
             "https://ad.doubleclick.net/ddm/activity*",
             "http://ad.doubleclick.net/ddm/activity*",
             "https://*.fls.doubleclick.net/activityi*",
-            "http://*.fls.doubleclick.net/activityi*"
+            "http://*.fls.doubleclick.net/activityi*",
+            "https://*.fls.doubleclick.net/activityj*",
+            "http://*.fls.doubleclick.net/activityj*",
+            "https://fls.doubleclick.net/activityi*",
+            "http://fls.doubleclick.net/activityi*",
+            "https://fls.doubleclick.net/activityj*",
+            "http://fls.doubleclick.net/activityj*"
           ];
       }
 
@@ -488,6 +494,12 @@ $(document).ready(function() {
           "https://adservice.google.com/ddm/*",
           "https://*.fls.doubleclick.net/activityi*",
           "http://*.fls.doubleclick.net/activityi*",
+          "https://*.fls.doubleclick.net/activityj*",
+          "http://*.fls.doubleclick.net/activityj*",
+          "https://fls.doubleclick.net/activityi*",
+          "http://fls.doubleclick.net/activityi*",
+          "https://fls.doubleclick.net/activityj*",
+          "http://fls.doubleclick.net/activityj*",
           "http://stats.g.doubleclick.net/r/collect/*",
           "https://stats.g.doubleclick.net/r/collect/*"
         ] 
@@ -510,6 +522,12 @@ $(document).ready(function() {
         "urls": [
           "https://*.fls.doubleclick.net/activityi*",
           "http://*.fls.doubleclick.net/activityi*",
+          "https://*.fls.doubleclick.net/activityj*",
+          "http://*.fls.doubleclick.net/activityj*",
+          "https://fls.doubleclick.net/activityi*",
+          "http://fls.doubleclick.net/activityi*",
+          "https://fls.doubleclick.net/activityj*",
+          "http://fls.doubleclick.net/activityj*",
           "http://stats.g.doubleclick.net/r/collect/*",
           "https://stats.g.doubleclick.net/r/collect/*"
         ]

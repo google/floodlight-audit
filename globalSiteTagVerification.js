@@ -259,6 +259,7 @@ class GlobalTagVerification {
         chrome.tabs.get(tab_id, (t) => {
             // $('#global-site-panel-url').html(t.url);
             var page_url = decodeURI(t.url);
+            page_url = page_url.split('?')[0];
             if(!this.globalSiteTags.hasOwnProperty(page_url)) {
                 this.globalSiteTags[page_url] = {
                     id: this.id,

@@ -30,6 +30,7 @@
   <script src="report_entries.js"></script>
   <script src="floodlightTracker.js"></script>
   <script src="globalSiteTagVerification.js"></script>
+ <!-- <script src="otherTracker.js"></script> -->
 </head>
 
 <body>
@@ -43,6 +44,16 @@
         <div class="input-group">
           <span class="input-group-addon" id="basic-addon1">Domain</span>
           <input id="domain" type="text" required class="form-control" placeholder="mydomain.com" aria-describedby="basic-addon1">
+        </div>
+        <br />
+        <div class="input-group">
+          <span class="input-group-addon" id="basic-addon1">Depth*</span>
+          <input id="depth" type="text" required class="form-control" value="10" placeholder="10" aria-describedby="basic-addon1">
+        </div>
+        <br />
+        <div class="input-group">
+          <span class="input-group-addon" id="basic-addon1">Load Time (seconds)*</span>
+          <input id="loadTime" type="text" required class="form-control" value="5" placeholder="5" aria-describedby="basic-addon1">
         </div>
         <br />
         <div class="input-group">
@@ -98,7 +109,7 @@
           <input type="checkbox" id="enable_tag_reset" name="fancy-checkbox-primary" id="fancy-checkbox-primary" autocomplete="off"> Reset Global Site Tag Per Webpage
         </div>
         <div style="padding: 8px">
-          <input type="checkbox" id="show_no_floodlight" name="fancy-checkbox-primary" id="fancy-checkbox-primary" autocomplete="off"> Show Pages with No Floodlight
+          <input type="checkbox" id="show_no_floodlight" name="fancy-checkbox-primary" id="fancy-checkbox-primary" autocomplete="off"> Show Pages with No Conversion Tags
         </div>
         <br/>
         <button id="run" type="button" class="btn btn-default btn-lg">
@@ -124,7 +135,7 @@
           </li>
           <li role="presentation"><h4>Pages Found: <span id="pages-found" class="badge"></span><br /></h4></li>
           <li role="presentation"><h4>Pages Visited: <span id="pages-visited" class="badge"></span><br /></h4></li>
-          <li role="presentation"><h4>Floodlight Tags Found: <span id="floodlight-tags" class="badge"></span></h4></li>
+          <li role="presentation"><h4>Tags Found: <span id="floodlight-tags" class="badge"></span></h4></li>
         </ul>
       </div>
     </div>
@@ -146,23 +157,25 @@
         </table>
       </div>
     </div>
-    <!-- Flood Light Site Panel -->
+    <!-- Tag Panel -->
     <div id="floodlight-site-panel" class="panel panel-primary">
       <div class="panel-heading">
-        <h3 class="panel-title">Floodlight Report</h3>
+        <h3 class="panel-title">Conversion Tag Report</h3>
       </div>
-      <!-- DCM Floodlight Table -->
+      <!-- Tag Table -->
       <div class="panel-body" style="max-height: 500px; overflow-x: auto">
         <table id="floodlight-dcm-report-table" class="table">
           <thead>
             <tr>
               <th>Page</th>
-              <th>Floodlight Advertiser</th>
+              <th>Tag Type</th>
+              <th>Account Id</th>
+              <th>OGT (Y/N)</th>
+              <th>Network Call</th>
               <th>Floodlight ID</th>
               <th>Floodlight Activity Tag</th>
               <th>Floodlight Activity Group</th>
               <th>Sales Order</th>
-              <th>Event Snippet</th>
               <th>U Variables</th>
               <th>Warnings</th>
               <th>Errors</th>
@@ -171,7 +184,7 @@
           <tbody id="floodlight-dcm-report-body"></tbody>
         </table>
       </div>
-      <!-- GA Floodlight Table -->
+      <!-- Tag Table -->
     </div>
   </div>
   <script src="third_party/jquery.js"></script>

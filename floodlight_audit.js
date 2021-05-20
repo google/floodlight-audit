@@ -23,6 +23,7 @@ var mode = "doubleclick";
 var report = new ReportEntries();
 var globalTag = new GlobalTagVerification();
 var fl_call_tracker = new FloodlightTracker();
+//var other_tag_tracker = new OtherTracker();
 var TAB_ID;
 var WIN_ID;
 
@@ -37,8 +38,8 @@ function resetGraph() {
 resetGraph();
 
 var currentUrl = "";
-// var max_depth = 10;
-// var current_depth = 0;
+var max_depth = 10;
+var current_depth = 0;
 var loadTime = 6;
 var domain = "";
 var show_no_floodlight = false;
@@ -112,7 +113,7 @@ function checkUntracked(page) {
   }
 }
 
-function visit(tab) {
+function visit(tab, depth) {
   var nextUrl = getNextPage();
   if(graph.found === 1) { // if tag reset enabled, add user paramaters to the next url in the graph
     nextUrl = constructUrl(nextUrl, true);
@@ -136,8 +137,8 @@ function visit(tab) {
           console.warn('Error in loading url: ', url, chrome.runtime.lastError.message);
           setTimeout(() => {
             console.warn('Error on current page, visiting next page...')
-            driveVisit(tab, nextUrl)
-          }, 1500);
+            driveVisit(tab, nextUrl, depth)
+          }, loadTime * 1000);
         }
         // code snippet to drive next visit after specified time limit
         // else {
@@ -145,7 +146,7 @@ function visit(tab) {
         //     driveVisit(tab, currentUrl)
         //   }, loadTime * 1000);
         // }
-      }, 1000);
+      }, loadTime * 1000);
     });
   } else {
     checkUntracked(previousPage);
@@ -207,10 +208,11 @@ function scrapeLinks(targetTab) {
   }
 }
 
-function driveVisit(updatedTab, currentUrl) {
+function driveVisit(updatedTab, currentUrl, depth) {
+    current_depth += 1;
     previousPage = currentUrl;
     checkUntracked(previousPage);
-    visit(updatedTab);
+    visit(updatedTab, depth + 1);
 }
 
 function constructUrl(url, includeUserParams) {
@@ -241,7 +243,7 @@ function triggerNext() {
   $("#spinner").show();
   var tabId = Number($.urlParam("tabId"));
   chrome.tabs.get(tabId, function(tab) {
-    visit(tab);
+    visit(tab, current_depth);
   });
 }
 
@@ -251,6 +253,7 @@ function stop() {
     console.log('Resulting data: ', graph, fl_call_tracker.tracker);
   }
   resetGraph();
+  current_depth = 0;
   $("#stop, #spinner, #next").hide();
   $("#run").show();
   globalTag.removeVerificationListener();
@@ -259,6 +262,8 @@ function stop() {
   chrome.tabs.onUpdated.removeListener(tabOnCompleteListener);
   chrome.webRequest.onCompleted.removeListener(floodlightEventProxy);
   chrome.webRequest.onBeforeRedirect.removeListener(floodlightEventProxy);
+ //chrome.webRequest.onCompleted.removeListener(otherEventProxy);
+ //  chrome.webRequest.onBeforeRedirect.removeListener(otherEventProxy);
 }
 
 // passiveModeListener - only fires in manual mode. Function sets the tool state
@@ -286,8 +291,8 @@ function tabOnCompleteListener(id, changeInfo, tab) {
   if (id === TAB_ID && changeInfo.status === 'complete') {
     scrapeLinks(tab);
     setTimeout(() => {
-      driveVisit(tab, currentUrl);
-    }, 1000)
+      driveVisit(tab, currentUrl, current_depth);
+    }, loadTime * 1000)
   }
 }
 
@@ -405,9 +410,11 @@ $(document).ready(function() {
 
   $("#download").click(function() {
     var floodlightOutput = fl_call_tracker.printTracker(mode);
+    //var otherTagOutput = other_tag_tracker.printTracker();
     var gstOutput = globalTag.printGlobalSiteTable();
     var date = new Date().toString().replace(/\s/g, "");
     download(`${domain}-${mode}-floodlight-report-${date}.csv`, floodlightOutput);
+    //download(`${domain}-other-tag-report-${date}.csv`, otherTagOutput);
     if(global_tag_verification_enabled) {
       download(`${domain}-gst-report-${date}.csv`, gstOutput);
     }
@@ -431,6 +438,8 @@ $(document).ready(function() {
         fl_config_value.replace(/\s/g, '').split(",") :
         [];
     domain = $("#domain").val();
+    max_depth = parseInt($("#depth").val());
+    loadTime = parseInt($("#loadTime").val());
     manual_enabled = document.getElementById("enable_manual").checked; //////TEST
     show_no_floodlight = document.getElementById("show_no_floodlight").checked;
     global_tag_verification_enabled = document.getElementById("enable_tag_verification").checked;
@@ -442,6 +451,7 @@ $(document).ready(function() {
     $("#stop").show();
     $("#spinner").show();
     $('#floodlight-dcm-report-body').html("");
+    //$('#other-tag-body').html("");
 
     localStorage.setItem("report", "");
     report = new ReportEntries();
@@ -456,6 +466,8 @@ $(document).ready(function() {
     fl_call_tracker.setShowNoFloodlight(show_no_floodlight);
     fl_call_tracker.setDcmInformation(profileId, accountId);
 
+    //other_tag_tracker.clearTracker();
+    // other_tag_tracker.setGclid(gclid);
 
     if (mode == 'doubleclick' && profileId != '' && accountId != ''){
       dcMode = 'authentication';
@@ -466,6 +478,7 @@ $(document).ready(function() {
       // clear first party cookies before initial run
       globalTag.clearFirstPartyCookies(currentUrl, domain);
       var urls = [];
+      //var otherurls = [];
       if(mode == 'doubleclick') {
         urls = [
             "https://ad.doubleclick.net/activity*",
@@ -479,7 +492,19 @@ $(document).ready(function() {
             "https://fls.doubleclick.net/activityi*",
             "http://fls.doubleclick.net/activityi*",
             "https://fls.doubleclick.net/activityj*",
-            "http://fls.doubleclick.net/activityj*"
+            "http://fls.doubleclick.net/activityj*",
+            "http://*.google-analytics.com/i/collect*",
+            "http://*.google-analytics.com/j/collect*",
+            "http://*.google-analytics.com/collect*",
+            "http://*.google-analytics.com/g/collect*",
+            "https://*.google-analytics.com/i/collect*",
+            "https://*.google-analytics.com/j/collect*",
+            "https://*.google-analytics.com/collect*",
+            "https://*.google-analytics.com/g/collect*",
+            "http://*.g.doubleclick.net/pagead/viewthroughconversion/*",
+            "https://*.g.doubleclick.net/pagead/viewthroughconversion/*",
+            "http://*.googleadservices.com/pagead/conversion/*",
+            "https://*.googleadservices.com/pagead/conversion/*"
           ];
       }
 
@@ -488,10 +513,10 @@ $(document).ready(function() {
         disableRequestCache,
         { "urls": [
           ...urls,
-          "http://adservice.google.com/*",
-          "https://adservice.google.com/*",
-          "http://adservice.google.com/ddm/*",
-          "https://adservice.google.com/ddm/*",
+          //"http://adservice.google.com/*",
+          //"https://adservice.google.com/*",
+          //"http://adservice.google.com/ddm/*",
+          //"https://adservice.google.com/ddm/*",
           "https://*.fls.doubleclick.net/activityi*",
           "http://*.fls.doubleclick.net/activityi*",
           "https://*.fls.doubleclick.net/activityj*",
@@ -501,18 +526,24 @@ $(document).ready(function() {
           "https://fls.doubleclick.net/activityj*",
           "http://fls.doubleclick.net/activityj*",
           "http://stats.g.doubleclick.net/r/collect/*",
-          "https://stats.g.doubleclick.net/r/collect/*"
-        ] 
+          "https://stats.g.doubleclick.net/r/collect/*",
+          "http://*.google-analytics.com/*",
+          "https://*.google-analytics.com/*",
+          "http://*.g.doubleclick.net/pagead/viewthroughconversion/*",
+          "https://*.g.doubleclick.net/pagead/viewthroughconversion/*",
+          "http://*.googleadservices.com/pagead/conversion/*",
+          "https://*.googleadservices.com/pagead/conversion/*"
+        ]
       });
       // setup floodlight tracking on completed(200) network calls
       chrome.webRequest.onCompleted.addListener(
         floodlightEventProxy, {
         "urls": [
-          ...urls,
-          "http://adservice.google.com/*",
-          "https://adservice.google.com/*",
-          "http://adservice.google.com/ddm/*",
-          "https://adservice.google.com/ddm/*"
+          ...urls
+          //,"http://adservice.google.com/*",
+          //"https://adservice.google.com/*",
+          //"http://adservice.google.com/ddm/*",
+          //"https://adservice.google.com/ddm/*"
         ]
       });
 
@@ -529,14 +560,25 @@ $(document).ready(function() {
           "https://fls.doubleclick.net/activityj*",
           "http://fls.doubleclick.net/activityj*",
           "http://stats.g.doubleclick.net/r/collect/*",
-          "https://stats.g.doubleclick.net/r/collect/*"
+          "https://stats.g.doubleclick.net/r/collect/*",
+          "http://*.google-analytics.com/i/collect*",
+          "http://*.google-analytics.com/j/collect*",
+          "http://*.google-analytics.com/collect*",
+          "http://*.google-analytics.com/g/collect*",
+          "https://*.google-analytics.com/i/collect*",
+          "https://*.google-analytics.com/j/collect*",
+          "https://*.google-analytics.com/collect*",
+          "https://*.google-analytics.com/g/collect*",
+          "http://*.g.doubleclick.net/pagead/viewthroughconversion/*",
+          "https://*.g.doubleclick.net/pagead/viewthroughconversion/*",
+          "http://*.googleadservices.com/pagead/conversion/*",
+          "https://*.googleadservices.com/pagead/conversion/*"
         ]
       });
       ////////////////////// NEW FLOODLIGHT TRACKER END //////////////////////
 
       // adds any user defined parameters (gclid || gclsrc) to base url before start
       var baseUrl = manual_enabled ? constructUrl(tab.url, enable_tag_reset) : tab.url;
-
       // enable global tag verification if specified by the user
       if(global_tag_verification_enabled) {
         globalTag.globalVerificationSetup(baseUrl, TAB_ID, gclid);
@@ -560,7 +602,7 @@ $(document).ready(function() {
         console.log('ON RUN graph state:', graph);
         // adds listener to wait for page to load completely before moving to the next page
         chrome.tabs.onUpdated.addListener(tabOnCompleteListener);
-        visit(tab);
+        visit(tab, current_depth);
       }
     });
   });

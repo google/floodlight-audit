@@ -51,7 +51,7 @@ class FloodlightTracker {
             return;
         }
         if(mode === 'doubleclick') {
-            this.extractDCMFloodlightData(page_url, event, floodlightConfigId);
+            this.extractTagData(page_url, event, floodlightConfigId);
         } 
     }
     
@@ -66,7 +66,8 @@ class FloodlightTracker {
                 this.tracker[page_url][0] = {
                     id: id,
                     page_url: page_url,
-                    floodlights: [],
+                    tag_type: 'None',
+                    floodlights: ['None'],
                     advertiser: 'None',
                     // network_call_verification: 'None',
                     // network_call_detail: '',
@@ -80,63 +81,111 @@ class FloodlightTracker {
                     auiddc: 'None',
                     floodlight_id: null,
                     warnings: 'None',
-                    errors: 'No floodlight(s) detected'
+                    errors: 'No Conversion Tags detected'
                 };
             } 
             this.addToTable(mode, this.tracker[page_url][0]);
         }
     }
 
-    extractDCMFloodlightData = (page_url, event, floodlightConfigId) => {
+    extractTagData = (page_url, event, floodlightConfigId) => {
         var data = null;
         var floodlight_url = event.url;
-        var fl_advertiser = floodlight_url.match(/src=(\w*)/) ? // Note - this is also used as the Floodlight Config ID
-        floodlight_url.match(/src=(\w*)/)[1] : null;
+        var tag_type = null;
+        var tag_sub_type = null;
+        var fl_advertiser = null;
+        var activity = null;
+        var group = null;
+        var floodlight_cookie = null;
+        var google_ads_cookie = null;
+        var auiddc = null;
+        var uvars = null;
+        var order = null;
+        var redirectCall = null;
+        var event_snippet = null;
 
-        // Check for a match between Floodlight config ID list and advertiser ID -- return null here if there is not a match
-        if (floodlightConfigId.length > 0 && !floodlightConfigId.includes(fl_advertiser)) {
+        if (floodlight_url.match(/doubleclick.net\/activity/) != null) {
+            tag_type = 'Floodlight';
+            fl_advertiser = floodlight_url.match(/src=(\w*)/) ? // Note - this is also used as the Floodlight Config ID
+            floodlight_url.match(/src=(\w*)/)[1] : null;
+            // Check for a match between Floodlight config ID list and advertiser ID -- return null here if there is not a match
+            if (floodlightConfigId.length > 0 && !floodlightConfigId.includes(fl_advertiser)) {
             return null;
+            }
+
+           // cat = FL activity tag string (or, “Activity tag string” value in SA360 or Campaign Manager UI)
+           activity = floodlight_url.match(/cat=(\w*)/) ?
+           floodlight_url.match(/cat=(\w*)/)[1] : null;
+
+           // type = is the FL activity group string (or, “Floodlight activity group” value in SA360 or Campaign Manager UI)
+           group = floodlight_url.match(/type=(\w*)/) ?
+           floodlight_url.match(/type=(\w*)/)[1] : null;
+
+           // gcldc = floodlight cookie
+           floodlight_cookie = floodlight_url.match(/gcldc=([\w-\*]+)/) ?
+           floodlight_url.match(/gcldc=([\w-\*]+)/)[1] : null;
+
+           // gclaw = google ads cookie
+           google_ads_cookie = floodlight_url.match(/gclaw=([\w-\*]+)/)
+           ? floodlight_url.match(/gclaw=([\w-\*]+)/)[1] : null;
+
+           // auiddc = ID used to map gclids for non last click attribution
+           auiddc = floodlight_url.match(/auiddc=([\w\.]*)/)
+           ? floodlight_url.match(/auiddc=([\w\.]*)/)[1] : null;
+
+           uvars = JSON.stringify(floodlight_url.match(/u[0-9]*=(\w*)/g)).replace(/"/g, '') || null;
+
+           order = floodlight_url.match(/ord=([\d\.]*)/)
+           ? floodlight_url.match(/ord=([\d\.]*)/)[1] : null;
+
+           redirectCall = floodlight_url.match(/dc_pre=/) ? true : false;
         }
 
-        // cat = FL activity tag string (or, “Activity tag string” value in SA360 or Campaign Manager UI)
-        var activity = floodlight_url.match(/cat=(\w*)/) ?
-        floodlight_url.match(/cat=(\w*)/)[1] : null;
 
-        // type = is the FL activity group string (or, “Floodlight activity group” value in SA360 or Campaign Manager UI)
-        var group = floodlight_url.match(/type=(\w*)/) ?
-        floodlight_url.match(/type=(\w*)/)[1] : null;
+       if (floodlight_url.match(/www.google-analytics.com/) !== null) {
+           tag_type = 'Google Analytics';
+           fl_advertiser = floodlight_url.match(/tid=(\w*)/) ? //
+           floodlight_url.match(/tid=(\w*(-\w*)*)/)[1] : null;
+           tag_sub_type = floodlight_url.match(/&t=(\w*)/) ? //
+           floodlight_url.match(/&t=(\w*)/)[1] : null;
+        }
+
+       if (floodlight_url.match(/g.doubleclick.net\/pagead\/viewthroughconversion/) !== null) {
+           tag_type = 'Google Ads Remarketing';
+           fl_advertiser = floodlight_url.match(/pagead\/viewthroughconversion\/(\w*)/) ? //
+           floodlight_url.match(/pagead\/viewthroughconversion\/(\w*)/)[1] : null;
+       }
+
+       if (floodlight_url.match(/googleadservices.com\/pagead\/conversion/) !== null) {
+           tag_type = 'Google Ads Conversion';
+           fl_advertiser = floodlight_url.match(/pagead\/conversion\/(\w*)/) ? //
+           floodlight_url.match(/pagead\/conversion\/(\w*)/)[1] : null;
+        }
 
         // gtm = denotes that this is an event snippet
-        var event_snippet = floodlight_url.match(/gtm=(\w*)/) ? true : false
+        var event_snippet = floodlight_url.match(/gtm=(\w*)/) ? true : false;
         // floodlight_url.match(/gtm=(\w*)/)[1] : null;
 
-        // gcldc = floodlight cookie
-        var floodlight_cookie = floodlight_url.match(/gcldc=([\w-\*]+)/) ?
-        floodlight_url.match(/gcldc=([\w-\*]+)/)[1] : null;
-
-        // gclaw = google ads cookie
-        var google_ads_cookie = floodlight_url.match(/gclaw=([\w-\*]+)/)
-        ? floodlight_url.match(/gclaw=([\w-\*]+)/)[1] : null;
-
-        // auiddc = ID used to map gclids for non last click attribution
-        var auiddc = floodlight_url.match(/auiddc=([\w\.]*)/)
-        ? floodlight_url.match(/auiddc=([\w\.]*)/)[1] : null;
-
-        var uvars = JSON.stringify(floodlight_url.match(/u[0-9]*=(\w*)/g)).replace(/"/g, '') || null;
-
-        var order = floodlight_url.match(/ord=([\d\.]*)/)
-        ? floodlight_url.match(/ord=([\d\.]*)/)[1] : null;
-
+       /*
         // @TODO - this statement may filter out adservice calls that come in with minial data
         if(!fl_advertiser && !activity && !group) {
             return null;
         }
+       */
 
-        var floodlight_uuid = `${fl_advertiser}_${activity}_${group}`;
+        // Ignore redirect calls
+        if (redirectCall) {
+            return null;
+        }
         var id = uuidv4();
+        //var floodlight_uuid = `${fl_advertiser}_${activity}_${group}`; //Dedup
+        var floodlight_uuid = `${id}`;   //No Dedup
+        //page_url = page_url.split('?')[0]; //remove query parameters
+        floodlight_url = $('<textarea/>').text(floodlight_url).html();
         data = {
             id: id,
             page_url: page_url,
+            tag_type: tag_type,
             floodlights: [{ url: floodlight_url, network_call_status: event.statusCode }],
             advertiser: fl_advertiser,
             // network_call_verification: '',
@@ -162,15 +211,22 @@ class FloodlightTracker {
         if(!this.tracker[page_url].hasOwnProperty(floodlight_uuid)) {
             this.tracker[page_url][floodlight_uuid] = data;
             this.counter += 1;
-            this.extractWarnings(this.tracker[page_url][floodlight_uuid]);
-            this.addToTable('doubleclick', this.tracker[page_url][floodlight_uuid]);
-            this.dcmVerification(this.tracker[page_url][floodlight_uuid]);
+            if(tag_type == 'Floodlight'){
+              this.extractWarnings(this.tracker[page_url][floodlight_uuid]);
+              this.addToTable('doubleclick', this.tracker[page_url][floodlight_uuid]);
+              this.dcmVerification(this.tracker[page_url][floodlight_uuid]);
+            }
+            else {
+              this.addToTable('doubleclick', this.tracker[page_url][floodlight_uuid]);
+            }
         } else {
             this.tracker[page_url][floodlight_uuid].floodlights.push({
                 url: floodlight_url,
                 network_call_status: event.statusCode,
             });
+            if(tag_type == 'Floodlight'){
             this.extractWarnings(this.tracker[page_url][floodlight_uuid]);
+            }
             // this.floodlightVerification(this.tracker[page_url][floodlight_uuid]);
         }
         // this.floodlightVerification(this.tracker[page_url][floodlight_uuid]);
@@ -280,7 +336,10 @@ class FloodlightTracker {
         if(mode === 'doubleclick') {
             rowString = `<tr id="${row.id}">`;
             rowString += `<td id="${row.id}-page-url">${row.page_url || 'None'}</td>`;
+            rowString += `<td id="${row.id}-tag-type">${row.tag_type || 'None'}</td>`;
             rowString += `<td id="${row.id}-advertiser">${row.advertiser || 'None'}</td>`;
+            rowString += `<td id="${row.id}-event-snippet">${typeof row.event_snippet === 'boolean' ? row.event_snippet : 'None'}</td>`;
+            rowString += `<td id="${row.id}-network-call">${row.floodlights[0].url || 'None'}</td>`;
             rowString += `<td id="${row.id}-floodlight-id">${row.floodlight_id ?
                 `<a target="_blank" href="${getCMLink(this.dcmAccountId, row.advertiser, row.floodlight_id)}">${row.floodlight_id}</a>` :
                 'None'}</td>`;
@@ -288,7 +347,6 @@ class FloodlightTracker {
             rowString += `<td id="${row.id}-group">${row.group || 'None'}</td>`;
             rowString += `<td id="${row.id}-order">${row.order || 'None'}</td>`;
             // rowString += `<td id="${row.id}-network-call">${row.network_call_verification || 'None'}</td>`;//${tooltip}</td>`;
-            rowString += `<td id="${row.id}-event-snippet">${typeof row.event_snippet === 'boolean' ? row.event_snippet : 'None'}</td>`;
             // rowString += `<td id="${row.id}-floodlight-cookie">${row.floodlight_cookie || 'None'}</td>`;
             // rowString += `<td id="${row.id}-google-ads-cookie">${row.google_ads_cookie || 'None'}</td>`;
             // rowString += `<td id="${row.id}-auiddc">${row.auiddc || 'None'}</td>`;
@@ -304,17 +362,20 @@ class FloodlightTracker {
         var output = "";
         if (mode == 'doubleclick') {
             // Removed Network Calls Verified,Floodlight Coookie,Google Ads Cookie,auiddc,
-            output = 'Page,Floodlight Advertiser,Floodlight ID,Floodlight Activity,Floodlight Activity Group,Sales Order,Event Snippet,U Variables,Warnings,Errors\r\n';
+            output = 'Page,Tag Type,Account,OGT (Y/N),Network Call,Floodlight ID,Floodlight Activity,Floodlight Activity Group,Sales Order,U Variables,Warnings,Errors\r\n';
             Object.keys(this.tracker).forEach(page => {
                 Object.keys(this.tracker[page]).forEach(fl => {
                 var flood = this.tracker[page][fl];
                 var url = encodeURI(flood.page_url);
                 url = url.replace(/#/g, '%23');
+                var tag_url = flood.floodlights[0].url;
+                tag_url = $('<textarea/>').html(tag_url).text();
                 // "${flood.network_call_verification ? flood.network_call_verification.replace(/<br\/>/g, ' ') : 'None'}",
                 // "${flood.floodlight_cookie || 'None'}","${flood.google_ads_cookie || 'None'}",
                 // "${flood.auiddc || 'None'}",
-                output += `"${url || 'None'}","${flood.advertiser || 'None'}","${flood.floodlight_id ? getCMLink(this.dcmAccountId, flood.advertiser, flood.floodlight_id) : 'None'}",` +
-                `"${flood.activity || 'None'}","${flood.group || 'None'}","${flood.order || 'None'}","${flood.event_snippet || 'None'}","${flood.uvars || 'None'}",` +
+                output += `"${url || 'None'}","${flood.tag_type || 'None'}","${flood.advertiser || 'None'}","${typeof flood.event_snippet === 'boolean' ? flood.event_snippet : 'None'}",` +
+                `"${tag_url || 'None'}","${flood.floodlight_id ? getCMLink(this.dcmAccountId, flood.advertiser, flood.floodlight_id) : 'None'}",` +
+                `"${flood.activity || 'None'}","${flood.group || 'None'}","${flood.order || 'None'}","${flood.uvars || 'None'}",` +
                 `"${flood.warnings ? flood.warnings.replace(/<br\/>/g, ' ') : 'None'}","${flood.errors ? flood.errors.replace(/<br\/>/g, ' ') : 'None'}"\r\n`;
                 });
             });

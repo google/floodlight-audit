@@ -1,17 +1,17 @@
-# Floodlight Audit Tool
+# Conversion Audit Tool
 
-The Floodlight Audit tool is a chrome extension that crawls a website and
-generates a floodlight tag report by monitoring network traffic from the page.
+The Conversion Audit tool is a chrome extension that crawls a website and
+generates a conversion tag report by monitoring network traffic from the page.
 
 In this document, we will be outlining the installation, base functionality,
-features and way to use the floodlight audit tool that may come up in most use
+features and way to use the conversion audit tool that may come up in most use
 cases.
 
 This is not an officially supported Google product.
 
 ## License
 
-Copyright 2017 Google LLC
+Copyright 2021 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 this file except in compliance with the License. You may obtain a copy of the
@@ -80,8 +80,8 @@ the Control panel.
 
 6.  *Enable Manual Mode* - (defaults to off) If checked, the tool will run the
     audit in manual mode meaning that it will not automatically visit and scrape
-    web pages. Instead it will sit back passively and record any floodlight
-    light activity as the user navigates through the website. Allows a user to
+    web pages. Instead it will sit back passively and record any conversion
+    tag activity as the user navigates through the website. Allows a user to
     audit particular pages, simulate a customer actions that would fire flood
     lights which a page visit may not (button click, sign up, etc...) or
     potentially audit a mock transaction.
@@ -89,7 +89,7 @@ the Control panel.
 6.  *Enable Global Site Tag Verification* - (defaults to off) If checked, it
     will enable the feature to capture Global Site Tag and cookie information on
     each visited page (compatible with manual and default automatic mode) which
-    will be displayed in a separate table similar to the floodlight table.
+    will be displayed in a separate table.
 
 7.  *Reset Global Site Tag Per Webpage* - (defaults to off) If checked, this
     will tack on the gclid and gclsrc to each url visited in the audit to make
@@ -98,11 +98,11 @@ the Control panel.
     values on the base page of the audit and test the propagation of the GST and
     cookies across the site.
 
-8.  *Show Page with No Floodlights* - (defaults to off) If checked, tells the
-    tool to add an entry in the floodlight audit table for web pages that were
-    visited and where no floodlight activity was captured. If this feature is
-    not activated, by default the tool will only record floodlight activity on
-    pages where it occurred, leaving out pages with no floodlight activity.
+8.  *Show Pages with No Conversion Tags* - (defaults to off) If checked, tells the
+    tool to add an entry in the audit table for web pages that were
+    visited and where no conversion tag activity was captured. If this feature is
+    not activated, by default the tool will only record activity on
+    pages where it occurred, leaving out pages with no activity.
 
 9.  *Run Button* - Will trigger the audit process once it is clicked. After the
     first click, will be replaced by a Stop button which will terminate the
@@ -128,7 +128,7 @@ the Control panel.
 6.  (OPTIONAL) Check “Reset Global Site Tag Per Page” if you wish for cookie
     values to be cleared after each page visit and for the gclid and gclsrc
     values to be appended to each webpage.
-7.  (OPTIONAL) Check the “Show Pages with No Floodlight” in case you want the
+7.  (OPTIONAL) Check the “Show Pages with No Conversion Tags” in case you want the
     report to include pages that are visited but do not cause floodlight tags to
     be fired. This is particularly useful if you want to determine pages that
     are not being tracked.

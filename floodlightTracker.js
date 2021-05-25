@@ -133,7 +133,9 @@ class FloodlightTracker {
            auiddc = floodlight_url.match(/auiddc=([\w\.]*)/)
            ? floodlight_url.match(/auiddc=([\w\.]*)/)[1] : null;
 
-           uvars = JSON.stringify(floodlight_url.match(/u[0-9]*=(\w*)/g)).replace(/"/g, '') || null;
+           uvars = decodeURIComponent(
+               JSON.stringify(floodlight_url.match(/u[0-9]*=([^;]*)/g)).replace(/"/g, '')
+           ) || null;
 
            order = floodlight_url.match(/ord=([\d\.]*)/)
            ? floodlight_url.match(/ord=([\d\.]*)/)[1] : null;

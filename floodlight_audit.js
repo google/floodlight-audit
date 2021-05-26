@@ -220,10 +220,11 @@ function constructUrl(url, includeUserParams) {
   var newUrl = url;
   var parameters = [];
   if (includeUserParams) {
-    var gclid = $('#gclid').val();
-    var gclsrc = $('#gclsrc').val();
-    if(gclid !== '') parameters.push(`gclid=${gclid}`);
-    if(gclsrc !== '') parameters.push(`gclsrc=${gclsrc}`);
+    var gclidValue = $('#gclid').text();
+    var gclsrcValue = $('#gclsrc').text();
+
+    if(gclidValue !== '') parameters.push(`gclid=${gclidValue}`);
+    if(gclsrcValue !== '') parameters.push(`gclsrc=${gclsrcValue}`);
   }
   var urlsuffix = $('#urlsuffix').val();
   if(urlsuffix !== '' && !newUrl.includes(urlsuffix)) {
@@ -375,9 +376,14 @@ function disableRequestCache(details) {
 }
 
 $(document).ready(function() {
+  // generate test gclid value
   var gclidElement = document.getElementById("gclid");
-  var gclidVal = document.createTextNode("Test-" + Math.floor((Math.random() * 1000) + 1));
-  gclidElement.appendChild(gclidVal);
+  var gclidNode = document.createTextNode("Test-" + Math.floor((Math.random() * 1000) + 1));
+  gclidElement.appendChild(gclidNode);
+  // generate test gclsrc value
+  var gclsrcElement = document.getElementById("gclsrc");
+  var gclsrcNode = document.createTextNode("aw.ds");
+  gclsrcElement.appendChild(gclsrcNode);
 
   removeFileUploadListener();
   setupFileUploader();

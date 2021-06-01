@@ -113,11 +113,20 @@ function checkUntracked(page) {
   }
 }
 
+function scrubUrl(url) {
+  var cleanUrl = decodeURI(url);
+  // remove url params to reduce duplication
+  cleanUrl = cleanUrl.replace(/[\?|#].*$/, '');
+  // remove trailing '/' character from urls, reduce duplication
+  cleanUrl = cleanUrl.replace(/\/$/, '');
+  return cleanUrl;
+}
+
 function visit(tab, depth) {
   var nextUrl = getNextPage();
-  if(graph.found === 1) { // if tag reset enabled, add user paramaters to the next url in the graph
+  if(graph.found === 1) { //always add gclid and gclsrc to first visit
     nextUrl = constructUrl(nextUrl, true);
-  } else { //always add gclid and gclsrc to first visit
+  } else { // if tag reset enabled, add user paramaters to the next url in the graph
     nextUrl = constructUrl(nextUrl, enable_tag_reset);
   }
   console.log('Visit: ', nextUrl);
@@ -194,8 +203,10 @@ function scrapeLinks(targetTab) {
               } else if (current_domain != domain && link.startsWith('/')) {
                 link = null;
               }
-              if(link && !graph[link]) {
-                graph[link] =  "FOUND";
+              // add clean URL to grpah to reduce duplication
+              cleanLink = scrubUrl(link);
+              if(cleanLink && !graph[cleanLink]) {
+                graph[cleanLink] =  "FOUND";
                 graph.found++;
                 // if(urlExists(link)) {}
                 updateStats();
@@ -438,11 +449,12 @@ $(document).ready(function() {
     gclid = document.getElementById('gclid').innerText
     profileId = $("#profileId").val();
     accountId = $("#accountId").val();
-    var fl_config_value = $("#floodlightConfigId").val();
+    // Commenting out this feature since itt is no longer supported
+    // var fl_config_value = $("#floodlightConfigId").val();
     // if there are values in the Floodlight config, remove spaces and split it into a list
-    floodlightConfigId = fl_config_value != "" ?
-        fl_config_value.replace(/\s/g, '').split(",") :
-        [];
+    // floodlightConfigId = fl_config_value != "" ?
+    //     fl_config_value.replace(/\s/g, '').split(",") :
+    //     [];
     domain = $("#domain").val();
     max_depth = parseInt($("#depth").val());
     loadTime = parseInt($("#loadTime").val());
@@ -483,6 +495,7 @@ $(document).ready(function() {
       currentUrl = tab.url;
       // clear first party cookies before initial run
       globalTag.clearFirstPartyCookies(currentUrl, domain);
+      // Add Network Listeners
       var urls = [];
       //var otherurls = [];
       if(mode == 'doubleclick') {
@@ -584,26 +597,28 @@ $(document).ready(function() {
       ////////////////////// NEW FLOODLIGHT TRACKER END //////////////////////
 
       // adds any user defined parameters (gclid || gclsrc) to base url before start
-      var baseUrl = manual_enabled ? constructUrl(tab.url, enable_tag_reset) : tab.url;
       // enable global tag verification if specified by the user
       if(global_tag_verification_enabled) {
         globalTag.globalVerificationSetup(baseUrl, TAB_ID, gclid);
       }
-
       updateBehavior();
       //update behavior every 3 mins
       behaviorInterval = window.setTimeout(updateBehavior, 180000);
-
+      // clean up starting URL for both auto and manual mode
+      var startingUrl = scrubUrl(tab.url);
       // if manual mode is enabled, run initial step for tool's manual mode
       if(manual_enabled){
         chrome.tabs.onUpdated.addListener(passiveModeListener);
+        // adds any user defined parameters (gclid || gclsrc) to base url before manual start
+        var baseUrl = constructUrl(startingUrl, true)
+        console.log('Starting URL: ', baseUrl)
         currentUrl = baseUrl;
         chrome.tabs.update(TAB_ID, {
           url: baseUrl
         });
       } else {
         // else run initial step for tool's automatic mode
-        graph[baseUrl] = "FOUND";
+        graph[startingUrl] = "FOUND";
         graph.found += 1;
         console.log('ON RUN graph state:', graph);
         // adds listener to wait for page to load completely before moving to the next page

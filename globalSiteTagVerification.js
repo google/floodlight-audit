@@ -30,16 +30,7 @@ class GlobalTagVerification {
     }
 
     setUrl = (url) => {
-        this.verification_url = url;
-        if(!this.globalSiteTags.hasOwnProperty(url)) {
-            this.globalSiteTags[url] = {
-                id: this.id,
-                url: url,
-                tags: [],
-                cookies: []
-            }
-            this.id += 1;
-        }
+        this.addToGSTMap(url)
     }
 
     setTabId = (id) => {
@@ -50,13 +41,26 @@ class GlobalTagVerification {
         this.gclid = newGclid;
     }
 
+    addToGSTMap = (url) => {
+        var cleanUrl = scrubUrl(url);
+        if(!this.globalSiteTags.hasOwnProperty(cleanUrl)) {
+            this.globalSiteTags[cleanUrl] = {
+                id: this.id,
+                url: cleanUrl,
+                tags: [],
+                cookies: []
+            }
+            this.id += 1;
+        }
+    }
+
     /**
      * Sets up global tag verification and cookie verification
      * listeners for the current instance.
      *
      */
     globalVerificationSetup = (url, tabId, gclid) => {
-        this.setUrl(url);
+        this.addToGSTMap(url);
         this.setTabId(tabId);
         this.setGclid(gclid);
         // add no-cache headers onto outgoing requests to
@@ -258,18 +262,10 @@ class GlobalTagVerification {
     globalTagVerification = (event, tab_id) => {
         chrome.tabs.get(tab_id, (t) => {
             // $('#global-site-panel-url').html(t.url);
-            var page_url = decodeURI(t.url);
-            page_url = page_url.split('?')[0];
-            if(!this.globalSiteTags.hasOwnProperty(page_url)) {
-                this.globalSiteTags[page_url] = {
-                    id: this.id,
-                    url: page_url,
-                    tags: [],
-                    cookies: []
-                }
-                this.id += 1;
-            }
-            this.parseTagManager(page_url, event);
+            this.addToGSTMap(t.url);
+            var cleanUrl = scrubUrl(t.url);
+            // pass in cleaned up URL to ensure value matches what was added to the map
+            this.parseTagManager(cleanUrl, event);
         });
     }
 
@@ -326,7 +322,7 @@ class GlobalTagVerification {
             // generate regex to match incoming tab url with top level domain
             var tab_url =  decodeURI(tab.url);
             var domain_regex = new RegExp(`(\w*\d*\.)?${domain.replace('.', '\\.')}`);
-            var domain_match = tab_url.match(domain_regex)
+            var domain_match = tab_url.match(domain_regex);
             if (manual_set) {
                 if(changeInfo.status === 'complete' && domain_match) {
                     this.updateCookies(domain, tab_url);
@@ -368,28 +364,35 @@ class GlobalTagVerification {
                     cookie_map.aw_cookie = c;
                 }
             });
-            if(!this.globalSiteTags.hasOwnProperty(url)) {
-                this.globalSiteTags[url] = {
-                    id: this.id,
-                    url: url,
-                    tags: [],
-                    cookies: []
-                }
-                this.id += 1;
-            }
+            this.addToGSTMap(url);
+            var cleanUrl = scrubUrl(url);
+            // pass in cleaned up URL to ensure cookie value matches what was added to the map
             var cookie_value;
+            
             if(cookie_map.dc_cookie){
+                // check if _gcl_dc cookie already exists for this URL
+                var found = false;
+                this.globalSiteTags[cleanUrl].cookies.forEach(c => {
+                    if(c.indexOf('_gcl_dc') >= 0)
+                        found = true;
+                });
                 cookie_value = `${cookie_map.dc_cookie.name}=${cookie_map.dc_cookie.value}`;
-                if (this.globalSiteTags[url].cookies.indexOf(cookie_value) === -1) {
-                    this.globalSiteTags[url].cookies.push(cookie_value);
-                    this.addGlobalSiteTag(url);
+                if (this.globalSiteTags[cleanUrl].cookies.indexOf(cookie_value) === -1 && !found) {
+                    this.globalSiteTags[cleanUrl].cookies.push(cookie_value);
+                    this.addGlobalSiteTag(cleanUrl);
                 }
             }
             if(cookie_map.aw_cookie) {
+                // check if _gcl_aw cookie already exists for this URL
+                var found = false;
+                this.globalSiteTags[cleanUrl].cookies.forEach(c => {
+                    if(c.indexOf('_gcl_aw') >= 0)
+                        found = true;
+                });
                 cookie_value = `${cookie_map.aw_cookie.name}=${cookie_map.aw_cookie.value}`;
-                if (this.globalSiteTags[url].cookies.indexOf(cookie_value) === -1) {
-                    this.globalSiteTags[url].cookies.push(cookie_value);
-                    this.addGlobalSiteTag(url);
+                if (this.globalSiteTags[cleanUrl].cookies.indexOf(cookie_value) === -1 && !found) {
+                    this.globalSiteTags[cleanUrl].cookies.push(cookie_value);
+                    this.addGlobalSiteTag(cleanUrl);
                 }
             }
         });

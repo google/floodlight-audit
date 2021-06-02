@@ -104,13 +104,13 @@ class FloodlightTracker {
         var redirectCall = null;
         var event_snippet = null;
 
-        if (floodlight_url.match(/doubleclick.net\/activity/) != null) {
+        if (floodlight_url.match(/doubleclick.net.*\/activity/) != null) {
             tag_type = 'Floodlight';
             fl_advertiser = floodlight_url.match(/src=(\w*)/) ? // Note - this is also used as the Floodlight Config ID
             floodlight_url.match(/src=(\w*)/)[1] : null;
             // Check for a match between Floodlight config ID list and advertiser ID -- return null here if there is not a match
             if (floodlightConfigId.length > 0 && !floodlightConfigId.includes(fl_advertiser)) {
-            return null;
+              return null;
             }
 
            // cat = FL activity tag string (or, “Activity tag string” value in SA360 or Campaign Manager UI)

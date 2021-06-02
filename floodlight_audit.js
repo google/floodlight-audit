@@ -570,6 +570,7 @@ $(document).ready(function() {
       chrome.webRequest.onBeforeRedirect.addListener(
         floodlightEventProxy, {
         "urls": [
+	  ...urls,
           "https://*.fls.doubleclick.net/activityi*",
           "http://*.fls.doubleclick.net/activityi*",
           "https://*.fls.doubleclick.net/activityj*",

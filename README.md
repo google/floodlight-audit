@@ -54,64 +54,55 @@ Add a new "key" field in manifest.json and set the value to your key.
 ![Alt text](ui1.png)
 
 In this section we are going to outline the functionality of each element within
-the Control panel.
+the **Settings** panel.
 
-1.  *Domain* - Displays the top level domain for the website in the tab the tool
-    was open in. Used to verify that scraped on each page by the tool fall
-    within the same domain.
+1. *Domain* - Displays the top level domain for the website in the tab the tool
+   was open in.
 
-2.  *ProfileID* (optional) - Represents the user’s Campaign Manager(CM) Profile
-    ID. This field is optional as it is not needed to run the audit. If filled
-    out (along with CM Account ID) when floodlights are captured by the tool, a
-    link will be created for each entry that will take the user to the CM page
-    for that floodlight.
+2. *Depth (optional)* - Determines how deep in the web page directory path you
+   wish for the tool to scrape from the root domain
 
-3.  *CM Account ID* (optional) - Represents the Campaign Manager network account
-    ID. Similarly to ProfileID, this field is optional as it is not needed to
-    run the audit and if filled out with Profile ID it will allow the tool to
-    generate a link to the floodlight within the CM UI.
+3. *Load Time (seconds) (optional)* - This setting determines how long the tool
+   allows for a page to load before moving onto the next page. \*It is
+   critically important if using the tool in automated mode to choose a page
+   load time that would be inclusive of when Google tags fire or use a load time
+   that aligns with typical user navigation time.
 
-4.  *Floodlight Configuration ID* (optional) - This field can be filled out with
-    (1 or more) comma separated floodlight configuration IDs on which to filter
-    the audit run on a site. Only floodlights IDs present in this field will be
-    recorded during the audit. This helps scope down the audit to specific
-    floodlights that a user may want to test. If empty then all floodlights will
-    be recorded.
+4. *URL Suffix* - Optional field to add URL suffix to URL string
 
-5.  *URL Suffix* (optional) - Any value added to this field will be appended to
-    every URL visited by the extension.
+5. *URL File* - Optional field to upload a csv list of URLs for the tool to
+   crawl (no URL volume limit)
 
-6.  *Enable Manual Mode* - (defaults to off) If checked, the tool will run the
-    audit in manual mode meaning that it will not automatically visit and scrape
-    web pages. Instead it will sit back passively and record any conversion
-    tag activity as the user navigates through the website. Allows a user to
-    audit particular pages, simulate a customer actions that would fire flood
-    lights which a page visit may not (button click, sign up, etc...) or
-    potentially audit a mock transaction.
+6. *Enable Manual Mode - (defaults to off)* - If checked, the tool will run the
+   audit in manual mode meaning that it will not automatically visit and scrape
+   web pages. Instead it will sit back passively and record any floodlight light
+   activity as the user navigates through the website on their Chrome tab. This
+   allows a user to audit particular pages, completing actions (button click,
+   sign up, test purchase) to record activity based.
 
-6.  *Enable Global Site Tag Verification* - (defaults to off) If checked, it
-    will enable the feature to capture Global Site Tag and cookie information on
-    each visited page (compatible with manual and default automatic mode) which
-    will be displayed in a separate table.
+7. *Enable Global Site Tag Verification - (defaults to off)* - If checked, it
+   will enable the feature to capture Global Site Tag and cookie information on
+   each visited page (compatible with manual and default automatic mode) which
+   will be displayed in a separate table similar to the floodlight table.
 
-7.  *Reset Global Site Tag Per Webpage* - (defaults to off) If checked, this
-    will tack on the gclid and gclsrc to each url visited in the audit to make
-    sure the Global Site Tag (GST) and cookies can be set proper regardless of
-    the entry point on the site. Default tool behavior will only set these
-    values on the base page of the audit and test the propagation of the GST and
-    cookies across the site.
+8. *Reset Global Site Tag Per Webpage - (defaults to off)* - If checked, this
+   will tack on the gclid and gclsrc to each url visited in the audit to make
+   sure the Global Site Tag (GST) can fire and cookies can be set properly
+   regardless of the entry point to the site. Default tool behavior will only
+   set these values on the base page of the audit and test the propagation of
+   he GST and cookies across the site.
 
-8.  *Show Pages with No Conversion Tags* - (defaults to off) If checked, tells the
-    tool to add an entry in the audit table for web pages that were
-    visited and where no conversion tag activity was captured. If this feature is
-    not activated, by default the tool will only record activity on
-    pages where it occurred, leaving out pages with no activity.
+9. *Show Page with No Conversion Tags - (defaults to off)* - If checked, tells
+   the tool to add an entry in the Conversion Tag Report table for web pages
+   that were visited and where no conversion tags were captured. If this feature
+   is not activated, by default the tool will only record entries on pages where
+   conversion tags were present, leaving out pages with no conversion tags.
 
-9.  *Run Button* - Will trigger the audit process once it is clicked. After the
-    first click, will be replaced by a Stop button which will terminate the
+10. *Run Button* - Will trigger the audit process once it is clicked. After the
+    first click, it will be replaced by a Stop button which will terminate the
     audit.
 
-10. *Download Button* - Allows the user to download the audit results as a csv
+11. *Download Button* - Allows the user to download the audit results as a csv
     file matching the information displayed in the UI. It will download
     Floodlight results and Global Site Tag (if enabled by user) results as
     separate CSV files. Can be clicked at any point during the audit process.

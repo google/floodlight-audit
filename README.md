@@ -1,13 +1,14 @@
 # Conversion Audit Tool
 
-The Conversion Audit tool is a chrome extension that crawls a website and
-generates a conversion tag report by monitoring network traffic from the page.
+The Conversion Tag Audit Tool is a chrome extension that crawls a website and
+generates a gTag (and Google Analytics, Google Ads and Floodlight event tags)
+report by monitoring network traffic from the page.
 
 In this document, we will be outlining the installation, base functionality,
-features and way to use the conversion audit tool that may come up in most use
-cases.
+features and way to use the Conversion Tag Audit Tool that may come up in most
+use cases.
 
-This is not an officially supported Google product.
+The Conversion Tag Audit Tool is not an officially supported Google product.
 
 ## License
 
@@ -49,6 +50,8 @@ organization you may be need to generate a key, follow instructions here: https:
 Add a new "key" field in manifest.json and set the value to your key.
 
 ## User Interface
+
+![Alt text](ui1.png)
 
 In this section we are going to outline the functionality of each element within
 the Control panel.

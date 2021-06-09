@@ -148,10 +148,25 @@ the **Settings** panel.
 7.  *Floodlight Activity Tag* - Floodlight Activity Tag. “Cat=” Parameter value.
 8.  *Floodlight Activity Group* - Floodlight Activity Group. “Type=” Parameter
     value
-9.  *Floodlight Sales Order* - Order ID or cachebuster random number, depending on
-    whether the tag in question is a Sales Tag or a Counter Tag
-10. *Floodlight uVariables* - Custom uVariables associated with the floodlight in
-    question and whether they pulled in values for that Floodlight fire
-11. *Warnings* - Some warnings (like calling out empty uVariables) may be expected.
-    We are just highlighting this for you to look into if you wish.
+9.  *Floodlight Sales Order* - Order ID or cachebuster random number, depending
+    on whether the tag in question is a Sales Tag or a Counter Tag
+10. *Floodlight uVariables* - Custom uVariables associated with the floodlight
+    in question and whether they pulled in values for that Floodlight fire
+11. *Warnings* - Some warnings (like calling out empty uVariables) may be
+    expected. We are just highlighting this for you to look into if you wish.
 12. *Errors* - Any implementation errors we observe
+
+## Notes
+
+*   \*If you are seeing “False” for the “OGT” Column in the Conversion Tag
+    Report section:
+    *   Check that the Global Site Tag (gTag) includes the Config ID associated
+        to the conversion tag
+    *   Ensure the gTag is implemented properly and is firing immediately on
+        each page. If there is a delay, the output could show pages as not being
+        tagged
+    *   Validate that the specific Conversion or Remarketing actions are
+        deployed using GTM or a gTag Event Snippet
+*   Google Analytics calls are captured with google-analytics.com domains. If it
+    is a newer GA4 implementation the calls will not be captured if they are
+    hitting analytics.google.com instead of google-analytics.com/g/collect.

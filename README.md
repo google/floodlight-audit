@@ -1,13 +1,14 @@
 # Conversion Audit Tool
 
-The Conversion Audit tool is a chrome extension that crawls a website and
-generates a conversion tag report by monitoring network traffic from the page.
+The Conversion Tag Audit Tool is a chrome extension that crawls a website and
+generates a gTag (and Google Analytics, Google Ads and Floodlight event tags)
+report by monitoring network traffic from the page.
 
 In this document, we will be outlining the installation, base functionality,
-features and way to use the conversion audit tool that may come up in most use
-cases.
+features and way to use the Conversion Tag Audit Tool that may come up in most
+use cases.
 
-This is not an officially supported Google product.
+The Conversion Tag Audit Tool is not an officially supported Google product.
 
 ## License
 
@@ -44,79 +45,74 @@ are not formally supported.
 8.  Finally click the icon in the extension toolbar to open the tool.
 
 If the extension doesn't work due to chrome extensions restrictions in your
-organization you may be need to generate a key, follow instructions here: https://developer.chrome.com/apps/manifest/key
+organization you may be need to generate a key, follow instructions here:
+https://developer.chrome.com/apps/manifest/key
 
 Add a new "key" field in manifest.json and set the value to your key.
 
 ## User Interface
 
+![Alt text](ui1.png)
+
 In this section we are going to outline the functionality of each element within
-the Control panel.
+the **Settings** panel.
 
 1.  *Domain* - Displays the top level domain for the website in the tab the tool
-    was open in. Used to verify that scraped on each page by the tool fall
-    within the same domain.
+    was open in.
 
-2.  *ProfileID* (optional) - Represents the user’s Campaign Manager(CM) Profile
-    ID. This field is optional as it is not needed to run the audit. If filled
-    out (along with CM Account ID) when floodlights are captured by the tool, a
-    link will be created for each entry that will take the user to the CM page
-    for that floodlight.
+2.  *Depth (optional)* - Determines how deep in the web page directory path you
+    wish for the tool to scrape from the root domain
 
-3.  *CM Account ID* (optional) - Represents the Campaign Manager network account
-    ID. Similarly to ProfileID, this field is optional as it is not needed to
-    run the audit and if filled out with Profile ID it will allow the tool to
-    generate a link to the floodlight within the CM UI.
+3.  *Load Time (seconds) (optional)* - This setting determines how long the tool
+    allows for a page to load before moving onto the next page. \*It is
+    critically important if using the tool in automated mode to choose a page
+    load time that would be inclusive of when Google tags fire or use a load
+    time that aligns with typical user navigation time.
 
-4.  *Floodlight Configuration ID* (optional) - This field can be filled out with
-    (1 or more) comma separated floodlight configuration IDs on which to filter
-    the audit run on a site. Only floodlights IDs present in this field will be
-    recorded during the audit. This helps scope down the audit to specific
-    floodlights that a user may want to test. If empty then all floodlights will
-    be recorded.
+4.  *URL Suffix* - Optional field to add URL suffix to URL string
 
-5.  *URL Suffix* (optional) - Any value added to this field will be appended to
-    every URL visited by the extension.
+5.  *URL File* - Optional field to upload a csv list of URLs for the tool to
+    crawl (no URL volume limit)
 
-6.  *Enable Manual Mode* - (defaults to off) If checked, the tool will run the
+6.  *Enable Manual Mode - (defaults to off)* - If checked, the tool will run the
     audit in manual mode meaning that it will not automatically visit and scrape
-    web pages. Instead it will sit back passively and record any conversion
-    tag activity as the user navigates through the website. Allows a user to
-    audit particular pages, simulate a customer actions that would fire flood
-    lights which a page visit may not (button click, sign up, etc...) or
-    potentially audit a mock transaction.
+    web pages. Instead it will sit back passively and record any floodlight
+    light activity as the user navigates through the website on their Chrome
+    tab. This allows a user to audit particular pages, completing actions
+    (button click, sign up, test purchase) to record activity based.
 
-6.  *Enable Global Site Tag Verification* - (defaults to off) If checked, it
+7.  *Enable Global Site Tag Verification - (defaults to off)* - If checked, it
     will enable the feature to capture Global Site Tag and cookie information on
     each visited page (compatible with manual and default automatic mode) which
-    will be displayed in a separate table.
+    will be displayed in a separate table similar to the floodlight table.
 
-7.  *Reset Global Site Tag Per Webpage* - (defaults to off) If checked, this
+8.  *Reset Global Site Tag Per Webpage - (defaults to off)* - If checked, this
     will tack on the gclid and gclsrc to each url visited in the audit to make
-    sure the Global Site Tag (GST) and cookies can be set proper regardless of
-    the entry point on the site. Default tool behavior will only set these
-    values on the base page of the audit and test the propagation of the GST and
-    cookies across the site.
+    sure the Global Site Tag (GST) can fire and cookies can be set properly
+    regardless of the entry point to the site. Default tool behavior will only
+    set these values on the base page of the audit and test the propagation of
+    he GST and cookies across the site.
 
-8.  *Show Pages with No Conversion Tags* - (defaults to off) If checked, tells the
-    tool to add an entry in the audit table for web pages that were
-    visited and where no conversion tag activity was captured. If this feature is
-    not activated, by default the tool will only record activity on
-    pages where it occurred, leaving out pages with no activity.
+9.  *Show Page with No Conversion Tags - (defaults to off)* - If checked, tells
+    the tool to add an entry in the Conversion Tag Report table for web pages
+    that were visited and where no conversion tags were captured. If this
+    feature is not activated, by default the tool will only record entries on
+    pages where conversion tags were present, leaving out pages with no
+    conversion tags.
 
-9.  *Run Button* - Will trigger the audit process once it is clicked. After the
-    first click, will be replaced by a Stop button which will terminate the
+10. *Run Button* - Will trigger the audit process once it is clicked. After the
+    first click, it will be replaced by a Stop button which will terminate the
     audit.
 
-10. *Download Button* - Allows the user to download the audit results as a csv
+11. *Download Button* - Allows the user to download the audit results as a csv
     file matching the information displayed in the UI. It will download
     Floodlight results and Global Site Tag (if enabled by user) results as
     separate CSV files. Can be clicked at any point during the audit process.
 
 ## How to Use It
 
-1.  Navigate to the page from which you want to start, usually the websites home
-    page;
+1.  Navigate to the page from which you want to start with in Chrome, usually
+    the websites home page;
 2.  Open the tool by clicking the icon from the chrome toolbar;
 3.  The Domain is pre-populated based on the domain on the page from which you
     started, you can change it to narrow down the pages that should be crawled;
@@ -128,10 +124,10 @@ the Control panel.
 6.  (OPTIONAL) Check “Reset Global Site Tag Per Page” if you wish for cookie
     values to be cleared after each page visit and for the gclid and gclsrc
     values to be appended to each webpage.
-7.  (OPTIONAL) Check the “Show Pages with No Conversion Tags” in case you want the
-    report to include pages that are visited but do not cause floodlight tags to
-    be fired. This is particularly useful if you want to determine pages that
-    are not being tracked.
+7.  (OPTIONAL) Check the “Show Pages with No Conversion Tags” in case you want
+    the report to include pages that are visited but do not cause floodlight
+    tags to be fired. This is particularly useful if you want to determine pages
+    that are not being tracked.
 8.  Click the Run button, and wait as the crawler starts to visit your site.
     Note, keep the tool popup open, if you close it by clicking anywhere on
     Chrome the process will stop, and you will only get a partial report.
@@ -139,3 +135,38 @@ the Control panel.
     number of pages found then the audit will be marked as completed. At this
     point you can click the Download button to export a CSV version of the final
     Floodlight and Global Site Tag report (if enabled).
+
+## Output
+
+1.  *Page* - URL that was crawled for that result
+2.  *Tag Type* - Floodlight, Google Ads Conversion Tags, Google Analytics
+    Conversion Tags
+3.  *Account ID* - Config ID of the associated Global Site Tag
+4.  *gTag (Y/N)* - Flag to confirm associated gTag was observed\*
+5.  *Network Call* - Network call of the observed tag
+6.  *Floodlight ID* - Floodlight Activity ID
+7.  *Floodlight Activity Tag* - Floodlight Activity Tag. “Cat=” Parameter value.
+8.  *Floodlight Activity Group* - Floodlight Activity Group. “Type=” Parameter
+    value
+9.  *Floodlight Sales Order* - Order ID or cachebuster random number, depending
+    on whether the tag in question is a Sales Tag or a Counter Tag
+10. *Floodlight uVariables* - Custom uVariables associated with the floodlight
+    in question and whether they pulled in values for that Floodlight fire
+11. *Warnings* - Some warnings (like calling out empty uVariables) may be
+    expected. We are just highlighting this for you to look into if you wish.
+12. *Errors* - Any implementation errors we observe
+
+## Notes
+
+*   \*If you are seeing “False” for the “OGT” Column in the Conversion Tag
+    Report section:
+    *   Check that the Global Site Tag (gTag) includes the Config ID associated
+        to the conversion tag
+    *   Ensure the gTag is implemented properly and is firing immediately on
+        each page. If there is a delay, the output could show pages as not being
+        tagged
+    *   Validate that the specific Conversion or Remarketing actions are
+        deployed using GTM or a gTag Event Snippet
+*   Google Analytics calls are captured with google-analytics.com domains. If it
+    is a newer GA4 implementation the calls will not be captured if they are
+    hitting analytics.google.com instead of google-analytics.com/g/collect.

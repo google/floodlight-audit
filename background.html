@@ -21,16 +21,9 @@
 
 <head>
   <title>Tag Report</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="third_party/bootstrap.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-  <link rel="stylesheet" href="background.css">
-  
-  <script src="dcm.js"></script>
-  <script src="utils.js"></script>
-  <script src="report_entries.js"></script>
-  <script src="floodlightTracker.js"></script>
-  <script src="globalSiteTagVerification.js"></script>
- <!-- <script src="otherTracker.js"></script> -->
+  <link rel="stylesheet" href="css/background.css">
 </head>
 
 <body>
@@ -55,26 +48,7 @@
           <span class="input-group-addon" id="basic-addon1">Load Time (seconds)*</span>
           <input id="loadTime" type="text" required class="form-control" value="5" placeholder="5" aria-describedby="basic-addon1">
         </div>
-        <!--<br />-->
-        <div class="input-group" style="display:none">
-          <span class="input-group-addon" id="basic-addon1">ProfileID</span>
-          <input id="profileId" type="text" class="form-control" value="" placeholder="(Optional) E.g. 1234567" aria-describedby="basic-addon1">
-        </div>
-        <!--<br />-->
-        <div class="input-group" style="display:none">
-          <span class="input-group-addon" id="basic-addon1">CM AccountID</span>
-          <input id="accountId" type="text" class="form-control" value="" placeholder="(Optional) E.g. 1234567" aria-describedby="basic-addon1">
-        </div>
         <br />
-        <!-- Adding Floodlight Config/Advertiser Filter-->
-        <!-- Removing 
-        <div class="input-group">
-          <span class="input-group-addon" id="basic-addon1">Floodlight Configuration ID</span>
-          <input id="floodlightConfigId" type="text" class="form-control" value="" placeholder="(Optional) Comma-separated list, E.g. 1234567,2345678 " aria-describedby="basic-addon1">
-        </div>
-        <br />
-        -->
-        <!-- URL Suffix -->
         <div class="input-group">
           <span class="input-group-addon" id="basic-addon1">URL suffix</span>
           <input id="urlsuffix" type="text" class="form-control" value="" placeholder="(Optional) E.g. abc=123&def=456" aria-describedby="basic-addon1">
@@ -130,7 +104,7 @@
       <div class="panel-body">
         <ul class="nav nav-pills" role="tablist">
           <li class="spinner" role="presentation">
-            <img id="spinner" style="display:none" src="light_blue_material_design_loading.gif" width="60" /><br/>
+            <img id="spinner" style="display:none" src="images/light_blue_material_design_loading.gif" width="60" /><br/>
           </li>
           <li role="presentation"><h4>Pages Found: <span id="pages-found" class="badge"></span><br /></h4></li>
           <li role="presentation"><h4>Pages Visited: <span id="pages-visited" class="badge"></span><br /></h4></li>
@@ -187,5 +161,11 @@
     </div>
   </div>
   <script src="third_party/jquery.js"></script>
-  <script src="floodlight_audit.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/globalSiteTagVerification.js"></script>
+  <script src="js/floodlightTracker.js"></script>
+  <script src="js/web-crawler.js"></script>
+  <script src="js/network-monitor.js"></script>
+  <script src="js/ui-controller.js"></script>
 </body>

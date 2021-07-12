@@ -52,7 +52,7 @@ Add a new "key" field in manifest.json and set the value to your key.
 
 ## User Interface
 
-![Alt text](ui1.png)
+![Alt text](images/ui1.png)
 
 In this section we are going to outline the functionality of each element within
 the **Settings** panel.

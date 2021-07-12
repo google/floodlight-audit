@@ -27,6 +27,7 @@ class GlobalTagVerification {
         this.globalSiteTags = {};
         this.id = 0;
         this.gclid = null;
+        this.domain = $("#domain").val();
     }
 
     setUrl = (url) => {
@@ -127,6 +128,7 @@ class GlobalTagVerification {
      *
      */
     clearFirstPartyCookies = (url, cookieDomain) => {
+      console.log(`clearing fp cookies: ${url} ${cookieDomain}`);
         chrome.cookies.getAll({ 'domain': cookieDomain }, (cookies) => {
             cookies.forEach(c => {
                 chrome.cookies.remove({ 'url': url, 'name': c.name  })
@@ -241,7 +243,7 @@ class GlobalTagVerification {
         var verification_enabled = document.getElementById("enable_tag_verification").checked;
         var manual_set = document.getElementById("enable_manual").checked;
         if(verification_enabled) {
-            var domain_regex = new RegExp(`${domain.replace('.', '\\.')}`);
+            var domain_regex = new RegExp(`${this.domain.replace('.', '\\.')}`);
             if(manual_set) {
                 if(event.initiator.match(domain_regex)) {
                     this.globalTagVerification(event, event.tabId)
@@ -321,18 +323,18 @@ class GlobalTagVerification {
         if(verification_enabled) {
             // generate regex to match incoming tab url with top level domain
             var tab_url =  decodeURI(tab.url);
-            var domain_regex = new RegExp(`(\w*\d*\.)?${domain.replace('.', '\\.')}`);
+            var domain_regex = new RegExp(`(\w*\d*\.)?${this.domain.replace('.', '\\.')}`);
             var domain_match = tab_url.match(domain_regex);
             if (manual_set) {
                 if(changeInfo.status === 'complete' && domain_match) {
-                    this.updateCookies(domain, tab_url);
+                    this.updateCookies(this.domain, tab_url);
                 }
             } else {
                 if(updated_tab_id === this.verification_tab_id){
                     if(tag_reset_enabled && changeInfo.status === 'loading' && changeInfo.url) {
-                        this.clearFirstPartyCookies(tab_url, domain);
-                    }else if(changeInfo.status && domain_match) { //&& tab_url === verification_url) {
-                        this.updateCookies(domain, tab_url);
+                        this.clearFirstPartyCookies(tab_url, this.domain);
+                    } else if(changeInfo.status && domain_match) { //&& tab_url === verification_url) {
+                        this.updateCookies(this.domain, tab_url);
                     }
                 }
             }

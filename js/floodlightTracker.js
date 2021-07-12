@@ -52,9 +52,9 @@ class FloodlightTracker {
         }
         if(mode === 'doubleclick') {
             this.extractTagData(page_url, event, floodlightConfigId);
-        } 
+        }
     }
-    
+
     addEmptyTrackerEntry = (mode, url) => {
         var page_url = decodeURI(url);
         if(!this.tracker[page_url]) {

@@ -179,13 +179,12 @@ class WebCrawler {
               !link.startsWith('javascript:') &&
               !link.startsWith('chrome-extension:')
             ) {
-              if(current_domain === domain && link.startsWith('/')) {
+              if(current_domain === this.domain && link.startsWith('/')) {
                 link = current_base_url + link;
-              } else if (current_domain != domain && link.startsWith('/')) {
+              } else if (current_domain != this.domain && link.startsWith('/')) {
                 link = null;
               }
-
-              // add clean URL to grpah to reduce duplication
+              // add clean URL to graph to reduce duplication
               var cleanLink = scrubUrl(link);
 
               if(cleanLink && cleanLink != 'null' && cleanLink != 'undefined') {
@@ -231,7 +230,8 @@ class WebCrawler {
         }
       });
     } else {
-      this.running = false;
+      this.stop();
+      this.updateStats();
     }
   }
 

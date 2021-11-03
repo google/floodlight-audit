@@ -133,7 +133,6 @@ class UIController {
       // Setup global tag verification
       this.globalTag = new GlobalTagVerification();
       this.globalTag.globalVerificationReset();
-      this.globalTag.clearFirstPartyCookies(startingUrl, this.domain);
 
       if(this.enableTagVerification) {
         var gclid = document.getElementById('gclid').innerText

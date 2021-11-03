@@ -121,20 +121,20 @@ class GlobalTagVerification {
     }
 
     /**
-     * Removes all cookies under the given domain.
+     * Sample Code: Removes all cookies under the given domain.
      *
      * @param {string} url - url associated with cookie
      * @param {string} cookieDomain - specific domain which cookies belong to
      *
      */
-    clearFirstPartyCookies = (url, cookieDomain) => {
-      console.log(`clearing fp cookies: ${url} ${cookieDomain}`);
-        chrome.cookies.getAll({ 'domain': cookieDomain }, (cookies) => {
-            cookies.forEach(c => {
-                chrome.cookies.remove({ 'url': url, 'name': c.name  })
-            })
-        })
-    }
+    // clearFirstPartyCookies = (url, cookieDomain) => {
+    //   console.log(`clearing fp cookies: ${url} ${cookieDomain}`);
+    //     chrome.cookies.getAll({ 'domain': cookieDomain }, (cookies) => {
+    //         cookies.forEach(c => {
+    //             chrome.cookies.remove({ 'url': url, 'name': c.name  })
+    //         })
+    //     })
+    // }
 
     printGlobalSiteTable = () => {
         var output = 'URL,AccountIDs,Cookies\r\n'
@@ -331,9 +331,7 @@ class GlobalTagVerification {
                 }
             } else {
                 if(updated_tab_id === this.verification_tab_id){
-                    if(tag_reset_enabled && changeInfo.status === 'loading' && changeInfo.url) {
-                        this.clearFirstPartyCookies(tab_url, this.domain);
-                    } else if(changeInfo.status && domain_match) { //&& tab_url === verification_url) {
+                    if(changeInfo.status && domain_match) { //&& tab_url === verification_url) {
                         this.updateCookies(this.domain, tab_url);
                     }
                 }
